@@ -120,7 +120,15 @@ export function Header() {
                         <div className="text-xs text-gray-500">
                           {formatAddress(account!)}
                         </div>
-                        {currentUser && (
+                        {isAdmin && !currentUser ? (
+                          // Admin puro (sin rol de usuario)
+                          <div className="flex items-center space-x-1">
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                              👑 Admin
+                            </span>
+                          </div>
+                        ) : currentUser ? (
+                          // Usuario con rol
                           <div className="flex items-center space-x-1">
                             <span 
                               className={`text-xs px-2 py-0.5 rounded-full ${getRoleColor(currentUser.role)}`}
@@ -129,11 +137,11 @@ export function Header() {
                             </span>
                             {isAdmin && (
                               <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
-                                Admin
+                                +Admin
                               </span>
                             )}
                           </div>
-                        )}
+                        ) : null}
                       </div>
                       <Button
                         variant="outline"

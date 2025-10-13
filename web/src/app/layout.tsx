@@ -4,7 +4,10 @@ import "./globals.css";
 import { Web3Provider } from "@/contexts/Web3Context";
 import { Header } from "@/components/Header";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ 
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
 
 export const metadata: Metadata = {
   title: "Supply Chain Tracker",
@@ -18,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={inter.className}>
+      <body className={`${inter.variable} font-sans antialiased`}>
         <Web3Provider>
           <div className="min-h-screen bg-gray-50">
             <Header />
