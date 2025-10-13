@@ -210,8 +210,10 @@ Para propósitos de prueba con Anvil, puedes importar cuentas con fondos:
 4. Pega una de las claves privadas que Anvil mostró al iniciar:
    ```
    Cuenta Admin (0): 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
-   Cuenta Usuario 1: 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
-   Cuenta Usuario 2: 0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a
+   Cuenta Producer (1): 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
+   Cuenta Factory (2): 0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a
+   Cuenta Retailer (3): 0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6
+   Cuenta Consumer (4): 0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a
    ```
 5. Haz clic en **"Importar"**
 6. La cuenta aparecerá con 10,000 ETH (de prueba)
@@ -935,18 +937,23 @@ La cuenta no tiene suficiente ETH para pagar las tarifas de transacción (gas fe
 
 3. **Añadir fondos a cuentas específicas:**
    ```bash
-   # Producer
+   # Producer (0x70997970C51812dc3A010C7d01b50e0d17dc79C8)
    cast send 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 --value 100ether \
      --rpc-url http://localhost:8545 \
      --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
    
-   # Factory
+   # Factory (0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC)
    cast send 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC --value 100ether \
      --rpc-url http://localhost:8545 \
      --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
    
-   # Retailer
+   # Retailer (0x90F79bf6EB2c4f870365E785982E1f101E93b906)
    cast send 0x90F79bf6EB2c4f870365E785982E1f101E93b906 --value 100ether \
+     --rpc-url http://localhost:8545 \
+     --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+   
+   # Consumer (0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65)
+   cast send 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65 --value 100ether \
      --rpc-url http://localhost:8545 \
      --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
    ```
@@ -1165,22 +1172,22 @@ cast balance 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC \
 
 **Añadir Fondos a Todas las Cuentas del Sistema:**
 ```bash
-# Producer (Cuenta 1)
+# Producer (Cuenta 1 - 0x70997970C51812dc3A010C7d01b50e0d17dc79C8)
 cast send 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 --value 100ether \
   --rpc-url http://localhost:8545 \
   --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 
-# Factory (Cuenta 2)
+# Factory (Cuenta 2 - 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC)
 cast send 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC --value 100ether \
   --rpc-url http://localhost:8545 \
   --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 
-# Retailer (Cuenta 3)
+# Retailer (Cuenta 3 - 0x90F79bf6EB2c4f870365E785982E1f101E93b906)
 cast send 0x90F79bf6EB2c4f870365E785982E1f101E93b906 --value 100ether \
   --rpc-url http://localhost:8545 \
   --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 
-# Consumer (Cuenta 4)
+# Consumer (Cuenta 4 - 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65)
 cast send 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65 --value 100ether \
   --rpc-url http://localhost:8545 \
   --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
@@ -1198,11 +1205,11 @@ echo "Consumer:" && cast balance 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65 --rp
 ### Cuentas de Prueba Anvil (Clave Privada)
 
 ```
-Admin:    0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
-User 1:   0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
-User 2:   0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a
-User 3:   0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6
-User 4:   0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a
+Admin (0xf39Fd6...):    0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+Producer (0x70997...):  0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
+Factory (0x3C44C...):   0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a
+Retailer (0x90F79...):  0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6
+Consumer (0x15d34...):  0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a
 ```
 
 ### Configuración de Red en MetaMask
