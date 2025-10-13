@@ -60,7 +60,8 @@ export default function TokensPage() {
     };
 
     loadTokens();
-  }, [account, currentUser, isApproved, router, getMyTokens, getToken, getMyTokenBalance]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account, currentUser, isApproved, router]);
 
   if (!currentUser || !isApproved) {
     return null;
