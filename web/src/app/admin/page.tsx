@@ -54,7 +54,8 @@ export default function AdminPage() {
     };
 
     loadData();
-  }, [account, currentUser, isAdmin, router, getAllUsers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account, currentUser, isAdmin, router]);
 
   if (!currentUser || !isAdmin) {
     return null;

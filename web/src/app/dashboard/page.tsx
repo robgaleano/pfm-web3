@@ -35,7 +35,8 @@ export default function Dashboard() {
     };
 
     loadStats();
-  }, [account, currentUser, isApproved, router, getDashboardData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account, currentUser, isApproved, router]);
 
   if (!currentUser || !isApproved) {
     return null;
