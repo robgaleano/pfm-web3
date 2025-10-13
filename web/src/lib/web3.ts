@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ethers, BrowserProvider, Contract } from 'ethers';
 import { CONTRACT_CONFIG } from '@/contracts/config';
+import logger from './logger';
 
 /**
  * Servicio Web3 para interactuar con el blockchain
@@ -44,6 +46,7 @@ export class Web3Service {
       const chainId = await window.ethereum.request({ method: 'eth_chainId' });
       return parseInt(chainId, 16) === 31337; // Anvil network
     } catch (error) {
+      logger.error(`Error checking network: ${error}`);
       return false;
     }
   }
