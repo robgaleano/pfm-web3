@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWallet, useUsers } from '@/hooks/useWallet';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 export default function Home() {
   const router = useRouter();
-  const { account, connectWallet, currentUser } = useWallet();
+  const { account, connectWallet, currentUser, isAdmin, isApproved } = useWallet();
   const { requestRole } = useUsers();
   const [selectedRole, setSelectedRole] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,10 +41,22 @@ export default function Home() {
     }
   };
 
-  if (currentUser && currentUser.status === 'Approved') {
-    router.push('/dashboard');
-    return null;
-  }
+  // Redirigir según el tipo de usuario
+  useEffect(() => {
+    if (!account) return;
+
+    // Si es admin (sin necesidad de rol), ir a admin
+    if (isAdmin && !currentUser) {
+      router.push('/admin');
+      return;
+    }
+
+    // Si tiene rol aprobado, ir a dashboard
+    if (currentUser && isApproved) {
+      router.push('/dashboard');
+      return;
+    }
+  }, [account, isAdmin, currentUser, isApproved, router]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -67,7 +79,27 @@ export default function Home() {
               Conectar Wallet
             </Button>
           </div>
+        ) : isAdmin && !currentUser ? (
+          // Admin puro - redirigiendo a panel de administración
+          <div className="space-y-4">
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <p className="text-sm text-purple-800">
+                <strong>👑 Administrador detectado</strong>
+              </p>
+              <p className="text-xs text-purple-700 mt-2">
+                Redirigiendo al panel de administración...
+              </p>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-800">
+                <strong>Wallet:</strong><br />
+                <span className="font-mono text-xs break-all">{account}</span>
+              </p>
+            </div>
+          </div>
         ) : !currentUser ? (
+          // Usuario sin rol - mostrar formulario
           <div className="space-y-4">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-800">
@@ -96,6 +128,7 @@ export default function Home() {
             </Button>
           </div>
         ) : currentUser.status === 'Pending' ? (
+          // Usuario con solicitud pendiente
           <div className="space-y-4">
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <p className="text-sm text-yellow-800">
@@ -118,6 +151,7 @@ export default function Home() {
             </p>
           </div>
         ) : currentUser.status === 'Rejected' ? (
+          // Usuario rechazado
           <div className="space-y-4">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <p className="text-sm text-red-800">

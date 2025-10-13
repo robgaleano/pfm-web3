@@ -15,7 +15,7 @@ interface User {
 
 export default function AdminPage() {
   const router = useRouter();
-  const { currentUser, account, isAdmin } = useWallet();
+  const { account, isAdmin } = useWallet();
   const { getAllUsers } = useUsers();
   
   const [users, setUsers] = useState<User[]>([]);
@@ -28,7 +28,8 @@ export default function AdminPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!account || !currentUser || !isAdmin) {
+    // El admin puede acceder sin necesidad de tener un rol de usuario
+    if (!account || !isAdmin) {
       router.push('/');
       return;
     }
@@ -55,9 +56,10 @@ export default function AdminPage() {
 
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, currentUser, isAdmin, router]);
+  }, [account, isAdmin, router]);
 
-  if (!currentUser || !isAdmin) {
+  // El admin puede acceder sin currentUser (rol de usuario)
+  if (!account || !isAdmin) {
     return null;
   }
 
