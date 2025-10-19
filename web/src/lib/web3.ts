@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ethers, BrowserProvider, Contract } from 'ethers';
 import { CONTRACT_CONFIG } from '@/contracts/config';
-import logger from './logger';
+import logger from '@/lib/logger';
 
 /**
  * Servicio Web3 para interactuar con el blockchain
@@ -198,7 +198,7 @@ export class Web3Service {
     try {
       return await this.contract[method].estimateGas(...args);
     } catch (error) {
-      console.error('Error estimating gas:', error);
+      logger.error(`Error estimating gas: ${error}`);
       throw new Error('No se pudo estimar el gas para esta transacción');
     }
   }

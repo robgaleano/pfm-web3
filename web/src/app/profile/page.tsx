@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useWallet, useDashboard } from '@/hooks/useWallet';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import logger from '@/lib/logger';
 import Link from 'next/link';
 
 export default function ProfilePage() {
@@ -41,7 +42,7 @@ export default function ProfilePage() {
           }
         }
       } catch (error) {
-        console.error('Error loading stats:', error);
+        logger.error(`Error loading stats: ${error}`);
       } finally {
         setIsLoading(false);
       }

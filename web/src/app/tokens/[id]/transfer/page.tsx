@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import logger from '@/lib/logger';
 
 interface User {
   userAddress: string;
@@ -76,7 +77,7 @@ export default function TransferTokenPage() {
 
         setValidRecipients(valid);
       } catch (error) {
-        console.error('Error loading data:', error);
+        logger.error(`Error loading data: ${error}`);
         alert('Error al cargar datos');
         router.push('/tokens');
       }
@@ -117,7 +118,7 @@ export default function TransferTokenPage() {
       alert('Transferencia iniciada exitosamente. Esperando aceptación del destinatario.');
       router.push('/transfers');
     } catch (error) {
-      console.error('Error transferring token:', error);
+      logger.error(`Error transferring token: ${error}`);
       alert(error instanceof Error ? error.message : 'Error al transferir token');
     } finally {
       setIsLoading(false);

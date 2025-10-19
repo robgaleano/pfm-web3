@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { ethers, BrowserProvider, Contract } from 'ethers';
+import { BrowserProvider, Contract } from 'ethers';
 import { CONTRACT_CONFIG } from '@/contracts/config';
+import logger from '@/lib/logger';
 
 // Tipos
 export interface User {
@@ -87,6 +89,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   // Verificar conexión persistente al cargar
   useEffect(() => {
     checkPersistedConnection();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Verificar conexión guardada en localStorage
@@ -104,7 +107,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
         }
       }
     } catch (error) {
-      console.error('Error checking persisted connection:', error);
+      logger.error(`Error checking persisted connection: ${error}`);
     } finally {
       setIsLoading(false);
     }
@@ -127,7 +130,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
       // Cargar datos del usuario
       await loadUserData(savedAccount, contract);
     } catch (error) {
-      console.error('Error connecting to saved account:', error);
+      logger.error(`Error connecting to saved account: ${error}`);
       localStorage.removeItem('supply-chain-account');
     }
   };
@@ -190,7 +193,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
       setupEventListeners();
 
     } catch (error) {
-      console.error('Error connecting wallet:', error);
+      logger.error(`Error connecting wallet: ${error}`);
       alert('Error al conectar wallet');
     }
   };
@@ -224,10 +227,11 @@ export function Web3Provider({ children }: { children: ReactNode }) {
         });
       } catch (error) {
         // Usuario no registrado
+        logger.error(`User data not found for address ${address}: ${error}`);
         setCurrentUser(null);
       }
     } catch (error) {
-      console.error('Error loading user data:', error);
+      logger.error(`Error loading user data: ${error}`);
     }
   };
 
@@ -277,6 +281,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
         status: ['Pending', 'Approved', 'Rejected', 'Canceled'][userInfo.status] as any,
       };
     } catch (error) {
+      logger.error(`Error fetching user info for address ${targetAddress}: ${error}`);
       return null;
     }
   };
@@ -324,6 +329,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
         dateCreated: Number(token.dateCreated),
       };
     } catch (error) {
+      logger.error(`Error fetching token info for token ID ${tokenId}: ${error}`);
       return null;
     }
   };
@@ -388,6 +394,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
         status: ['Pending', 'Accepted', 'Rejected'][transfer.status] as any,
       };
     } catch (error) {
+      logger.error(`Error fetching transfer info for transfer ID ${transferId}: ${error}`);
       return null;
     }
   };

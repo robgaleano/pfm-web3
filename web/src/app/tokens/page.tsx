@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useWallet, useTokens } from '@/hooks/useWallet';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import logger from '@/lib/logger';
 import Link from 'next/link';
 
 interface Token {
@@ -53,7 +54,7 @@ export default function TokensPage() {
 
         setTokens(tokensData.filter((t): t is Token & { balance: number } => t !== null));
       } catch (error) {
-        console.error('Error loading tokens:', error);
+        logger.error(`Error loading tokens: ${error}`);
       } finally {
         setIsLoading(false);
       }
