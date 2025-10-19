@@ -22,6 +22,8 @@ cd web && npm install && npm run dev
 
 📖 **[Documentación Completa](./user_manual.md)** | 🔧 **[README Técnico del Contrato](./sc/README.md)** | 🎨 **[Mejoras de UI](./web/UI-IMPROVEMENTS.md)**
 
+📘 **[Guía de Deployment Detallada](./DEPLOYMENT_GUIDE.md)** - Solución de problemas comunes
+
 ---
 
 # 🔗 Supply Chain Tracker - Proyecto de Desarrollo Blockchain

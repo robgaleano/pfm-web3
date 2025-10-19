@@ -147,10 +147,23 @@ contract SupplyChain {
     // ==================== CONSTRUCTOR ====================
     
     /**
-     * @dev Constructor que establece al deployer como admin
+     * @dev Constructor que establece al deployer como admin y lo registra automáticamente
      */
     constructor() {
         admin = msg.sender;
+        
+        // Registrar automáticamente al admin como usuario aprobado
+        uint256 adminUserId = nextUserId++;
+        users[adminUserId] = User({
+            id: adminUserId,
+            userAddress: admin,
+            role: "admin",
+            status: UserStatus.Approved
+        });
+        addressToUserId[admin] = adminUserId;
+        
+        emit UserRoleRequested(admin, "admin");
+        emit UserStatusChanged(admin, UserStatus.Approved);
     }
 
     // ==================== USER MANAGEMENT FUNCTIONS ====================
