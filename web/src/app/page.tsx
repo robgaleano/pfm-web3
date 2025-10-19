@@ -1,19 +1,26 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useWallet, useUsers } from '@/hooks/useWallet';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import logger from '@/lib/logger';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useWallet, useUsers } from "@/hooks/useWallet";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import logger from "@/lib/logger";
 
 export default function Home() {
   const router = useRouter();
-  const { account, connectWallet, currentUser, isAdmin, isApproved } = useWallet();
+  const { account, connectWallet, currentUser, isAdmin, isApproved } =
+    useWallet();
   const { requestRole } = useUsers();
-  const [selectedRole, setSelectedRole] = useState<string>('');
+  const [selectedRole, setSelectedRole] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleConnect = async () => {
@@ -26,17 +33,19 @@ export default function Home() {
 
   const handleRequestRole = async () => {
     if (!selectedRole) {
-      alert('Por favor selecciona un rol');
+      alert("Por favor selecciona un rol");
       return;
     }
 
     try {
       setIsSubmitting(true);
       await requestRole(selectedRole);
-      alert('Solicitud enviada exitosamente. Espera la aprobación del administrador.');
+      alert(
+        "Solicitud enviada exitosamente. Espera la aprobación del administrador."
+      );
     } catch (error) {
       logger.error(`Error requesting role: ${error}`);
-      alert('Error al solicitar rol');
+      alert("Error al solicitar rol");
     } finally {
       setIsSubmitting(false);
     }
@@ -48,13 +57,13 @@ export default function Home() {
 
     // Si es admin (sin necesidad de rol), ir a admin
     if (isAdmin && !currentUser) {
-      router.push('/admin');
+      router.push("/admin");
       return;
     }
 
     // Si tiene rol aprobado, ir a dashboard
     if (currentUser && isApproved) {
-      router.push('/dashboard');
+      router.push("/dashboard");
       return;
     }
   }, [account, isAdmin, currentUser, isApproved, router]);
@@ -66,9 +75,7 @@ export default function Home() {
           <h1 className="text-3xl font-bold text-gray-900">
             Supply Chain Tracker
           </h1>
-          <p className="text-gray-600">
-            Sistema de trazabilidad blockchain
-          </p>
+          <p className="text-gray-600">Sistema de trazabilidad blockchain</p>
         </div>
 
         {!account ? (
@@ -94,23 +101,29 @@ export default function Home() {
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-800">
-                <strong>Wallet:</strong><br />
+                <strong>Wallet:</strong>
+                <br />
                 <span className="font-mono text-xs break-all">{account}</span>
               </p>
             </div>
           </div>
         ) : !currentUser ? (
           // Usuario sin rol - mostrar formulario
-          <div className="space-y-4">
+          <div className="space-y-2">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-800">
-                <strong>Wallet conectada:</strong><br />
+                <strong>Wallet conectada:</strong>
+                <br />
                 <span className="font-mono text-xs break-all">{account}</span>
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="role">Selecciona tu rol</Label>
+              {selectedRole && (
+                <div className="space-y-2">
+                  <Label htmlFor="role">Rol de usuario a solicitar</Label>
+                </div>
+              )}
               <Select value={selectedRole} onValueChange={setSelectedRole}>
                 <SelectTrigger id="role">
                   <SelectValue placeholder="Selecciona un rol" />
@@ -119,16 +132,22 @@ export default function Home() {
                   <SelectItem value="producer">Producer (Productor)</SelectItem>
                   <SelectItem value="factory">Factory (Fábrica)</SelectItem>
                   <SelectItem value="retailer">Retailer (Minorista)</SelectItem>
-                  <SelectItem value="consumer">Consumer (Consumidor)</SelectItem>
+                  <SelectItem value="consumer">
+                    Consumer (Consumidor)
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <Button onClick={handleRequestRole} className="w-full" disabled={isSubmitting || !selectedRole}>
-              {isSubmitting ? 'Solicitando...' : 'Solicitar Rol'}
+            <Button
+              onClick={handleRequestRole}
+              className="w-full"
+              disabled={isSubmitting || !selectedRole}
+            >
+              {isSubmitting ? "Solicitando..." : "Solicitar Rol"}
             </Button>
           </div>
-        ) : currentUser.status === 'Pending' ? (
+        ) : currentUser.status === "Pending" ? (
           // Usuario con solicitud pendiente
           <div className="space-y-4">
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -136,13 +155,15 @@ export default function Home() {
                 <strong>Estado:</strong> Solicitud pendiente
               </p>
               <p className="text-xs text-yellow-700 mt-2">
-                Tu solicitud de rol <strong>{currentUser.role}</strong> está esperando aprobación del administrador.
+                Tu solicitud de rol <strong>{currentUser.role}</strong> está
+                esperando aprobación del administrador.
               </p>
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-800">
-                <strong>Wallet:</strong><br />
+                <strong>Wallet:</strong>
+                <br />
                 <span className="font-mono text-xs break-all">{account}</span>
               </p>
             </div>
@@ -151,7 +172,7 @@ export default function Home() {
               Recibirás acceso cuando un administrador apruebe tu solicitud.
             </p>
           </div>
-        ) : currentUser.status === 'Rejected' ? (
+        ) : currentUser.status === "Rejected" ? (
           // Usuario rechazado
           <div className="space-y-4">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -159,11 +180,16 @@ export default function Home() {
                 <strong>Estado:</strong> Solicitud rechazada
               </p>
               <p className="text-xs text-red-700 mt-2">
-                Tu solicitud de rol <strong>{currentUser.role}</strong> fue rechazada por el administrador.
+                Tu solicitud de rol <strong>{currentUser.role}</strong> fue
+                rechazada por el administrador.
               </p>
             </div>
 
-            <Button onClick={() => setSelectedRole('')} className="w-full" variant="outline">
+            <Button
+              onClick={() => setSelectedRole("")}
+              className="w-full"
+              variant="outline"
+            >
               Solicitar Otro Rol
             </Button>
           </div>
