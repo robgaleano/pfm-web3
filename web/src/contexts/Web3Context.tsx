@@ -5,6 +5,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { BrowserProvider, Contract } from 'ethers';
 import { CONTRACT_CONFIG } from '@/contracts/config';
 import logger from '@/lib/logger';
+import { toast } from 'sonner';
 
 // Tipos
 export interface User {
@@ -85,12 +86,79 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [shouldNavigateHome, setShouldNavigateHome] = useState(false);
 
   // Verificar conexión persistente al cargar
   useEffect(() => {
     checkPersistedConnection();
+    
+    // Verificar si hay un toast pendiente después de navegación
+    if (typeof window !== 'undefined') {
+      const pendingToast = sessionStorage.getItem('pending-toast');
+      if (pendingToast) {
+        try {
+          const { type, message, description } = JSON.parse(pendingToast);
+          // Mostrar el toast después de un pequeño delay para asegurar que el DOM esté listo
+          setTimeout(() => {
+            toast[type as 'success' | 'error' | 'info' | 'warning'](message, {
+              description,
+              duration: 6000
+            });
+          }, 500);
+          sessionStorage.removeItem('pending-toast');
+        } catch (error) {
+          logger.error(`Error showing pending toast: ${error}`);
+          sessionStorage.removeItem('pending-toast');
+        }
+      }
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  
+  // Configurar listeners cuando se conecta
+  useEffect(() => {
+    if (isConnected && window.ethereum) {
+      setupEventListeners();
+      
+      // Cleanup: remover listeners al desmontar
+      return () => {
+        if (window.ethereum?.removeListener) {
+          window.ethereum.removeListener('accountsChanged', () => {});
+          window.ethereum.removeListener('chainChanged', () => {});
+        }
+      };
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConnected]);
+
+  // Manejar navegación después de cambio de cuenta
+  useEffect(() => {
+    if (shouldNavigateHome && typeof window !== 'undefined') {
+      setShouldNavigateHome(false);
+      
+      // Mostrar toast ANTES de navegar
+      const toastId = toast.info('Redirigiendo a la página principal...', {
+        duration: Infinity, // No se cierra automáticamente
+        description: 'Cargando tu información de usuario'
+      });
+      
+      // Delay para permitir que el toast se muestre ANTES de recargar
+      setTimeout(() => {
+        // Guardar el toast en sessionStorage para mostrarlo después de recargar
+        sessionStorage.setItem('pending-toast', JSON.stringify({
+          type: 'info',
+          message: 'Cuenta cambiada exitosamente',
+          description: 'Tu información de usuario ha sido actualizada'
+        }));
+        
+        // Cerrar el toast actual antes de navegar
+        toast.dismiss(toastId);
+        
+        // Navegar
+        window.location.href = '/';
+      }, 1000); // 1 segundo de delay
+    }
+  }, [shouldNavigateHome]);
 
   // Verificar conexión guardada en localStorage
   const checkPersistedConnection = async () => {
@@ -139,7 +207,9 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   const connectWallet = async () => {
     try {
       if (!window.ethereum) {
-        alert('MetaMask no está instalado!');
+        toast.error('MetaMask no está instalado', {
+          description: 'Por favor instala MetaMask para usar esta aplicación'
+        });
         return;
       }
 
@@ -189,12 +259,11 @@ export function Web3Provider({ children }: { children: ReactNode }) {
       // Cargar datos del usuario
       await loadUserData(account, contract);
 
-      // Configurar listeners
-      setupEventListeners();
-
     } catch (error) {
       logger.error(`Error connecting wallet: ${error}`);
-      alert('Error al conectar wallet');
+      toast.error('Error al conectar wallet', {
+        description: 'No se pudo conectar con MetaMask'
+      });
     }
   };
 
@@ -216,7 +285,9 @@ export function Web3Provider({ children }: { children: ReactNode }) {
       const code = await contract.runner?.provider?.getCode(CONTRACT_CONFIG.address);
       if (!code || code === '0x') {
         logger.error('Contract not deployed at the configured address. Please deploy the contract first.');
-        alert('Smart contract not found. Please ensure Anvil is running and the contract is deployed.');
+        toast.error('Smart contract no encontrado', {
+          description: 'Asegúrate de que Anvil esté corriendo y el contrato desplegado'
+        });
         disconnectWallet();
         return;
       }
@@ -253,15 +324,24 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   const setupEventListeners = () => {
     if (!window.ethereum) return;
 
-    window.ethereum.on('accountsChanged', (accounts: string[]) => {
+    window.ethereum.on('accountsChanged', async (accounts: string[]) => {
       if (accounts.length === 0) {
         disconnectWallet();
+        toast.info('Wallet desconectada');
       } else {
         const newAccount = accounts[0];
+        logger.info(`Account changed to: ${newAccount}`);
+        
         setAccount(newAccount);
         localStorage.setItem('supply-chain-account', newAccount);
+        
         if (contract) {
-          loadUserData(newAccount, contract);
+          // Cargar datos del nuevo usuario
+          await loadUserData(newAccount, contract);
+          
+          // Activar navegación
+          // El toast se mostrará antes y después de la navegación
+          setShouldNavigateHome(true);
         }
       }
     });

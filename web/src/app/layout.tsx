@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Web3Provider } from "@/contexts/Web3Context";
 import { Header } from "@/components/Header";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -20,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
-      <body className={`${inter.variable} font-sans antialiased`}>
+    <html lang="es" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
         <Web3Provider>
           <div className="min-h-screen bg-gray-50">
             <Header />
@@ -30,6 +31,7 @@ export default function RootLayout({
             </main>
           </div>
         </Web3Provider>
+        <Toaster richColors position="top-left"/>
       </body>
     </html>
   );
