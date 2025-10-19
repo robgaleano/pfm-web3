@@ -212,9 +212,23 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   // Cargar datos del usuario
   const loadUserData = async (address: string, contract: Contract) => {
     try {
+      // Verificar que el contrato esté desplegado
+      const code = await contract.runner?.provider?.getCode(CONTRACT_CONFIG.address);
+      if (!code || code === '0x') {
+        logger.error('Contract not deployed at the configured address. Please deploy the contract first.');
+        alert('Smart contract not found. Please ensure Anvil is running and the contract is deployed.');
+        disconnectWallet();
+        return;
+      }
+
       // Verificar si es admin
-      const adminCheck = await contract.isAdmin(address);
-      setIsAdmin(adminCheck);
+      try {
+        const adminCheck = await contract.isAdmin(address);
+        setIsAdmin(adminCheck);
+      } catch (adminError: any) {
+        logger.error(`Error checking admin status: ${adminError?.message || adminError}`);
+        setIsAdmin(false);
+      }
 
       // Intentar cargar info del usuario
       try {
@@ -225,9 +239,9 @@ export function Web3Provider({ children }: { children: ReactNode }) {
           role: userInfo.role,
           status: ['Pending', 'Approved', 'Rejected', 'Canceled'][userInfo.status] as any,
         });
-      } catch (error) {
-        // Usuario no registrado
-        logger.error(`User data not found for address ${address}: ${error}`);
+      } catch {
+        // Usuario no registrado (esto es esperado para usuarios nuevos)
+        logger.debug(`User not registered: ${address}`);
         setCurrentUser(null);
       }
     } catch (error) {
