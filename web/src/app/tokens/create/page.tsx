@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import logger from '@/lib/logger';
 
 export default function CreateTokenPage() {
   const router = useRouter();
@@ -48,7 +49,7 @@ export default function CreateTokenPage() {
           );
           setAvailableTokens(tokensWithBalance.filter((t): t is { id: number; name: string; balance: number } => t !== null));
         } catch (error) {
-          console.error('Error loading tokens:', error);
+          logger.error(`Error loading tokens: ${error}`);
         }
       };
       loadTokens();
@@ -86,7 +87,7 @@ export default function CreateTokenPage() {
       alert('Token creado exitosamente');
       router.push('/tokens');
     } catch (error) {
-      console.error('Error creating token:', error);
+      logger.error(`Error creating token: ${error}`);
       alert(error instanceof Error ? error.message : 'Error al crear token');
     } finally {
       setIsLoading(false);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useWeb3 } from '@/contexts/Web3Context';
+import logger from '@/lib/logger';
 
 /**
  * Hook personalizado que expone las funcionalidades del Web3Context
@@ -236,7 +237,7 @@ export function useDashboard() {
         pendingTransfers,
       };
     } catch (error) {
-      console.error('Error getting dashboard data:', error);
+      logger.error(`Error getting dashboard data: ${error}`);
       return null;
     }
   };

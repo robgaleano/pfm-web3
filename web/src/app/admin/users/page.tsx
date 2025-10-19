@@ -6,6 +6,7 @@ import { useWallet, useUsers } from '@/hooks/useWallet';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import logger from '@/lib/logger';
 
 interface User {
   userAddress: string;
@@ -32,7 +33,7 @@ export default function AdminUsersPage() {
       setUsers(allUsers);
       applyFilters(allUsers, statusFilter, roleFilter);
     } catch (error) {
-      console.error('Error loading users:', error);
+      logger.error(`Error loading users: ${error}`);
     } finally {
       setIsLoading(false);
     }
@@ -77,7 +78,7 @@ export default function AdminUsersPage() {
       alert('Usuario aprobado exitosamente');
       await loadUsers();
     } catch (error) {
-      console.error('Error approving user:', error);
+      logger.error(`Error approving user: ${error}`);
       alert(error instanceof Error ? error.message : 'Error al aprobar usuario');
     } finally {
       setProcessingAddress(null);
@@ -95,7 +96,7 @@ export default function AdminUsersPage() {
       alert('Usuario rechazado');
       await loadUsers();
     } catch (error) {
-      console.error('Error rejecting user:', error);
+      logger.error(`Error rejecting user: ${error}`);
       alert(error instanceof Error ? error.message : 'Error al rechazar usuario');
     } finally {
       setProcessingAddress(null);

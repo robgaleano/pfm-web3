@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useWallet, useTransfers, useTokens } from '@/hooks/useWallet';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import logger from '@/lib/logger';
 
 interface Transfer {
   id: number;
@@ -68,7 +69,7 @@ export default function TransfersPage() {
       setAllTransfers(allTransfersData.filter(t => t !== null) as TransferWithToken[]);
       setPendingTransfers(pendingTransfersData.filter(t => t !== null) as TransferWithToken[]);
     } catch (error) {
-      console.error('Error loading transfers:', error);
+      logger.error(`Error loading transfers: ${error}`);
     } finally {
       setIsLoading(false);
     }
@@ -95,7 +96,7 @@ export default function TransfersPage() {
       alert('Transferencia aceptada exitosamente');
       await loadTransfers();
     } catch (error) {
-      console.error('Error accepting transfer:', error);
+      logger.error(`Error accepting transfer: ${error}`);
       alert(error instanceof Error ? error.message : 'Error al aceptar transferencia');
     } finally {
       setProcessingId(null);
@@ -113,7 +114,7 @@ export default function TransfersPage() {
       alert('Transferencia rechazada');
       await loadTransfers();
     } catch (error) {
-      console.error('Error rejecting transfer:', error);
+      logger.error(`Error rejecting transfer: ${error}`);
       alert(error instanceof Error ? error.message : 'Error al rechazar transferencia');
     } finally {
       setProcessingId(null);

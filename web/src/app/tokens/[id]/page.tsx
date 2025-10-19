@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useWallet, useTokens } from '@/hooks/useWallet';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import logger from '@/lib/logger';
 import Link from 'next/link';
 
 interface TokenDetail {
@@ -57,7 +58,7 @@ export default function TokenDetailPage() {
           router.push('/tokens');
         }
       } catch (error) {
-        console.error('Error loading token:', error);
+        logger.error(`Error loading token: ${error}`);
         alert('Error al cargar token');
         router.push('/tokens');
       } finally {

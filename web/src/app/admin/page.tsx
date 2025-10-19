@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useWallet, useUsers } from '@/hooks/useWallet';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import logger from '@/lib/logger';
 import Link from 'next/link';
 
 interface User {
@@ -48,7 +49,7 @@ export default function AdminPage() {
         };
         setStats(stats);
       } catch (error) {
-        console.error('Error loading users:', error);
+        logger.error(`Error loading users: ${error}`);
       } finally {
         setIsLoading(false);
       }

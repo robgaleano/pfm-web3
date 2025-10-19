@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import logger from '@/lib/logger';
 
 export default function Home() {
   const router = useRouter();
@@ -19,7 +20,7 @@ export default function Home() {
     try {
       await connectWallet();
     } catch (error) {
-      console.error('Error connecting wallet:', error);
+      logger.error(`Error connecting wallet: ${error}`);
     }
   };
 
@@ -34,7 +35,7 @@ export default function Home() {
       await requestRole(selectedRole);
       alert('Solicitud enviada exitosamente. Espera la aprobación del administrador.');
     } catch (error) {
-      console.error('Error requesting role:', error);
+      logger.error(`Error requesting role: ${error}`);
       alert('Error al solicitar rol');
     } finally {
       setIsSubmitting(false);
