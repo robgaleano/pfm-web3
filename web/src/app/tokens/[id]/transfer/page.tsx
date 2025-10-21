@@ -25,7 +25,7 @@ export default function TransferTokenPage() {
   const { currentUser, account, isApproved } = useWallet();
   const { getToken, getMyTokenBalance } = useTokens();
   const { transferToken } = useTransfers();
-  const { getAllUsers } = useUsers();
+  const { getApprovedUsers } = useUsers(); // ✅ Usar función pública
   
   const [tokenName, setTokenName] = useState('');
   const [balance, setBalance] = useState(0);
@@ -65,7 +65,7 @@ export default function TransferTokenPage() {
         setBalance(tokenBalance);
 
         // Obtener usuarios válidos según el rol
-        const allUsers = await getAllUsers();
+        const allUsers = await getApprovedUsers(); // ✅ Usar función pública
         const userRole = currentUser.role.toLowerCase();
         
         let targetRole = '';
@@ -93,7 +93,9 @@ export default function TransferTokenPage() {
     if (tokenId) {
       loadData();
     }
-  }, [account, currentUser, isApproved, tokenId, router, getToken, getMyTokenBalance, getAllUsers]);
+    // ✅ Removidas las funciones de las dependencias para evitar loop infinito
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account, currentUser, isApproved, tokenId, router]);
 
   if (!currentUser || !isApproved) {
     return null;

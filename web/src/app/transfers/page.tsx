@@ -24,8 +24,8 @@ interface TransferWithToken extends Transfer {
 
 export default function TransfersPage() {
   const router = useRouter();
-  const { currentUser, account, isApproved, getStatusColor } = useWallet();
-  const { getMyTransfers, getMyPendingTransfers, getTransfer, acceptTransfer, rejectTransfer } = useTransfers();
+  const { currentUser, account, isApproved, getStatusColor, isAdmin } = useWallet();
+  const { getMyTransfers, getMyPendingTransfers, getAllTransfers, getTransfer, acceptTransfer, rejectTransfer } = useTransfers();
   const { getToken } = useTokens();
   
   const [allTransfers, setAllTransfers] = useState<TransferWithToken[]>([]);
@@ -36,10 +36,21 @@ export default function TransfersPage() {
   const loadTransfers = async () => {
     try {
       setIsLoading(true);
-      const [transferIds, pendingIds] = await Promise.all([
-        getMyTransfers(),
-        getMyPendingTransfers(),
-      ]);
+      
+      // ✅ Si es admin, obtener TODAS las transferencias; sino, solo las del usuario
+      let transferIds: number[];
+      let pendingIds: number[];
+      
+      if (isAdmin) {
+        transferIds = await getAllTransfers();
+        // Para admin, las pendientes son las que están en estado Pending (sin filtrar por receptor)
+        pendingIds = [];
+      } else {
+        [transferIds, pendingIds] = await Promise.all([
+          getMyTransfers(),
+          getMyPendingTransfers(),
+        ]);
+      }
 
       const allTransfersData = await Promise.all(
         transferIds.map(async (id) => {
@@ -84,7 +95,7 @@ export default function TransfersPage() {
 
     loadTransfers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, currentUser, isApproved, router]);
+  }, [account, currentUser, isApproved, isAdmin, router]);
 
   if (!currentUser || !isApproved) {
     return null;
@@ -142,13 +153,23 @@ export default function TransfersPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
-      <h1 className="text-3xl font-bold">Transferencias</h1>
-
-      {/* Transferencias Pendientes */}
       <div>
-        <h2 className="text-2xl font-semibold mb-4">
-          Pendientes de Aceptar ({pendingTransfers.length})
-        </h2>
+        <h1 className="text-3xl font-bold">
+          {isAdmin ? 'Todas las Transferencias del Sistema' : 'Transferencias'}
+        </h1>
+        {isAdmin && (
+          <p className="text-sm text-gray-600 mt-1">
+            Vista de administrador - Modo solo lectura
+          </p>
+        )}
+      </div>
+
+      {/* Transferencias Pendientes - Solo mostrar si NO es admin */}
+      {!isAdmin && (
+        <div>
+          <h2 className="text-2xl font-semibold mb-4">
+            Pendientes de Aceptar ({pendingTransfers.length})
+          </h2>
 
         {isLoading ? (
           <div className="text-center py-8">
@@ -223,6 +244,7 @@ export default function TransfersPage() {
           </div>
         )}
       </div>
+      )} {/* ✅ Cierre del bloque de pendientes (solo para no-admin) */}
 
       {/* Historial de Transferencias */}
       <div>
@@ -236,7 +258,9 @@ export default function TransfersPage() {
           </div>
         ) : allTransfers.length === 0 ? (
           <Card className="p-8 text-center">
-            <p className="text-gray-600">No tienes transferencias aún</p>
+            <p className="text-gray-600">
+              {isAdmin ? 'No hay transferencias en el sistema aún' : 'No tienes transferencias aún'}
+            </p>
           </Card>
         ) : (
           <div className="space-y-3">
@@ -252,12 +276,12 @@ export default function TransfersPage() {
                         <span className={`text-xs px-2 py-1 rounded ${getStatusColor(transfer.status)}`}>
                           {getStatusLabel(transfer.status)}
                         </span>
-                        {isSender && (
+                        {!isAdmin && isSender && (
                           <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800">
                             Enviado
                           </span>
                         )}
-                        {!isSender && (
+                        {!isAdmin && !isSender && (
                           <span className="text-xs px-2 py-1 rounded bg-green-100 text-green-800">
                             Recibido
                           </span>
@@ -267,13 +291,21 @@ export default function TransfersPage() {
                       <div className="text-sm text-gray-600 space-y-1">
                         <div>
                           <span className="font-medium">
-                            {isSender ? 'Para:' : 'De:'}
+                            {isAdmin || isSender ? 'De:' : 'Para:'}
                           </span>{' '}
                           <span className="font-mono">
-                            {(isSender ? transfer.to : transfer.from).slice(0, 10)}...
-                            {(isSender ? transfer.to : transfer.from).slice(-8)}
+                            {(isAdmin ? transfer.from : (isSender ? transfer.to : transfer.from)).slice(0, 10)}...
+                            {(isAdmin ? transfer.from : (isSender ? transfer.to : transfer.from)).slice(-8)}
                           </span>
                         </div>
+                        {isAdmin && (
+                          <div>
+                            <span className="font-medium">Para:</span>{' '}
+                            <span className="font-mono">
+                              {transfer.to.slice(0, 10)}...{transfer.to.slice(-8)}
+                            </span>
+                          </div>
+                        )}
                         <div>
                           <span className="font-medium">Cantidad:</span> {transfer.amount}
                           {' '} | {' '}

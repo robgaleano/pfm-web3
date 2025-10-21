@@ -19,8 +19,8 @@ interface Token {
 
 export default function TokensPage() {
   const router = useRouter();
-  const { currentUser, account, isApproved } = useWallet();
-  const { getMyTokens, getToken, getMyTokenBalance } = useTokens();
+  const { currentUser, account, isApproved, isAdmin } = useWallet();
+  const { getMyTokens, getAllTokens, getToken, getMyTokenBalance, getTokenBalance } = useTokens();
   const [tokens, setTokens] = useState<Array<Token & { balance: number }>>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -33,12 +33,17 @@ export default function TokensPage() {
     const loadTokens = async () => {
       try {
         setIsLoading(true);
-        const tokenIds = await getMyTokens();
+        
+        // ✅ Si es admin, obtener TODOS los tokens; sino, solo los del usuario
+        const tokenIds = isAdmin ? await getAllTokens() : await getMyTokens();
         
         const tokensData = await Promise.all(
           tokenIds.map(async (id) => {
             const token = await getToken(id);
-            const balance = await getMyTokenBalance(id);
+            // ✅ Para admin, mostrar balance 0 si no tiene tokens
+            const balance = isAdmin 
+              ? await getTokenBalance(id, account!)
+              : await getMyTokenBalance(id);
             if (!token) return null;
             return { 
               id: token.id,
@@ -62,7 +67,7 @@ export default function TokensPage() {
 
     loadTokens();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, currentUser, isApproved, router]);
+  }, [account, currentUser, isApproved, isAdmin, router]);
 
   if (!currentUser || !isApproved) {
     return null;
@@ -75,7 +80,16 @@ export default function TokensPage() {
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Mis Tokens</h1>
+        <div>
+          <h1 className="text-3xl font-bold">
+            {isAdmin ? 'Todos los Tokens del Sistema' : 'Mis Tokens'}
+          </h1>
+          {isAdmin && (
+            <p className="text-sm text-gray-600 mt-1">
+              Vista de administrador - Modo solo lectura
+            </p>
+          )}
+        </div>
         {canCreateTokens && (
           <Link href="/tokens/create">
             <Button>Crear Nuevo Token</Button>
@@ -89,7 +103,9 @@ export default function TokensPage() {
         </div>
       ) : tokens.length === 0 ? (
         <Card className="p-12 text-center">
-          <p className="text-gray-600 mb-4">No tienes tokens aún</p>
+          <p className="text-gray-600 mb-4">
+            {isAdmin ? 'No hay tokens en el sistema aún' : 'No tienes tokens aún'}
+          </p>
           {canCreateTokens && (
             <Link href="/tokens/create">
               <Button>Crear Mi Primer Token</Button>
@@ -107,8 +123,18 @@ export default function TokensPage() {
                 </div>
 
                 <div className="space-y-2">
+                  {isAdmin && (
+                    <div className="flex justify-between text-sm border-b pb-2 mb-2">
+                      <span className="text-gray-600">Creador:</span>
+                      <span className="font-mono text-xs">
+                        {token.creator.slice(0, 6)}...{token.creator.slice(-4)}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Balance:</span>
+                    <span className="text-gray-600">
+                      {isAdmin ? 'Mi Balance:' : 'Balance:'}
+                    </span>
                     <span className="font-semibold">{token.balance}</span>
                   </div>
                   <div className="flex justify-between text-sm">
@@ -135,7 +161,7 @@ export default function TokensPage() {
                       Ver Detalles
                     </Button>
                   </Link>
-                  {token.balance > 0 && currentUser.role.toLowerCase() !== 'consumer' && (
+                  {token.balance > 0 && !isAdmin && currentUser.role.toLowerCase() !== 'consumer' && (
                     <Link href={`/tokens/${token.id}/transfer`} className="flex-1">
                       <Button className="w-full" size="sm">
                         Transferir

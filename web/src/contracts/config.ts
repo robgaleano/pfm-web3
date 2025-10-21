@@ -1,6 +1,7 @@
 // Configuración del contrato SupplyChain
 // NOTA: Actualizar estas direcciones después del deployment
 import SupplyChainAbi from './SupplyChain.abi.json';
+import { InterfaceAbi } from 'ethers';
 
 export const CONTRACT_CONFIG = {
   // Dirección del contrato desplegado (actualizar después del deploy)
@@ -10,7 +11,7 @@ export const CONTRACT_CONFIG = {
   adminAddress: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
   
   // ABI del contrato SupplyChain
-  abi: SupplyChainAbi
+  abi: SupplyChainAbi as InterfaceAbi
 };
 
 // Configuración de red Anvil

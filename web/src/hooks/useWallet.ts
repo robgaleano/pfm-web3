@@ -83,6 +83,7 @@ export function useUsers() {
     getUserInfo,
     changeUserStatus,
     getAllUsers,
+    getApprovedUsers, // ✅ Nueva función pública
     registerUser,
     refreshData,
   } = useWeb3();
@@ -91,6 +92,7 @@ export function useUsers() {
     getUserInfo,
     changeUserStatus,
     getAllUsers,
+    getApprovedUsers, // ✅ Exportar función pública
     registerUser,
     refreshData,
 
@@ -113,8 +115,10 @@ export function useTokens() {
     getToken,
     getUserTokens,
     getTokenBalance,
+    getAllTokenIds, // ✅ Nueva función para admin
     refreshData,
     account,
+    isAdmin,
   } = useWeb3();
 
   return {
@@ -122,11 +126,18 @@ export function useTokens() {
     getToken,
     getUserTokens,
     getTokenBalance,
+    getAllTokenIds, // ✅ Exponer para admin
     refreshData,
 
     // Helpers
     getMyTokens: () => getUserTokens(account!),
     getMyTokenBalance: (tokenId: number) => getTokenBalance(tokenId, account!),
+    // ✅ Helper para admin: obtener todos los tokens con detalles
+    getAllTokens: async () => {
+      if (!isAdmin) throw new Error('Only admin can access all tokens');
+      const tokenIds = await getAllTokenIds();
+      return tokenIds;
+    },
 
     // Función helper para crear tokens con validación
     createTokenWithValidation: async (
@@ -162,8 +173,10 @@ export function useTransfers() {
     getTransfer,
     getUserTransfers,
     getPendingTransfers,
+    getAllTransferIds, // ✅ Nueva función para admin
     refreshData,
     account,
+    isAdmin,
   } = useWeb3();
 
   return {
@@ -173,11 +186,18 @@ export function useTransfers() {
     getTransfer,
     getUserTransfers,
     getPendingTransfers,
+    getAllTransferIds, // ✅ Exponer para admin
     refreshData,
 
     // Helpers
     getMyTransfers: () => getUserTransfers(account!),
     getMyPendingTransfers: () => getPendingTransfers(account!),
+    // ✅ Helper para admin: obtener todas las transferencias con detalles
+    getAllTransfers: async () => {
+      if (!isAdmin) throw new Error('Only admin can access all transfers');
+      const transferIds = await getAllTransferIds();
+      return transferIds;
+    },
 
     // Función helper para transferir con validación
     transferTokenWithValidation: async (
