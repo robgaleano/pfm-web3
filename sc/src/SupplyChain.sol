@@ -457,6 +457,34 @@ contract SupplyChain {
         }
         return allUsers;
     }
+
+    /**
+     * @dev Función para obtener todos los usuarios aprobados (público)
+     * @return User[] Array de usuarios aprobados
+     */
+    function getApprovedUsers() public view returns (User[] memory) {
+        // Primero contamos cuántos usuarios aprobados hay
+        uint256 approvedCount = 0;
+        for (uint256 i = 1; i < nextUserId; i++) {
+            if (users[i].status == UserStatus.Approved) {
+                approvedCount++;
+            }
+        }
+
+        // Creamos el array con el tamaño exacto
+        User[] memory approvedUsers = new User[](approvedCount);
+        uint256 currentIndex = 0;
+        
+        // Llenamos el array solo con usuarios aprobados
+        for (uint256 i = 1; i < nextUserId; i++) {
+            if (users[i].status == UserStatus.Approved) {
+                approvedUsers[currentIndex] = users[i];
+                currentIndex++;
+            }
+        }
+        
+        return approvedUsers;
+    }
     
     /**
      * @dev Función para obtener transferencias pendientes para un usuario
@@ -488,5 +516,37 @@ contract SupplyChain {
         }
         
         return pendingTransfers;
+    }
+
+    // ==================== ADMIN READ-ONLY FUNCTIONS ====================
+    
+    /**
+     * @dev Función para obtener todos los tokens del sistema (solo admin)
+     * @return uint256[] Array de todos los IDs de tokens
+     */
+    function getAllTokenIds() public view onlyAdmin returns (uint256[] memory) {
+        uint256 totalTokens = nextTokenId - 1;
+        uint256[] memory tokenIds = new uint256[](totalTokens);
+        
+        for (uint256 i = 0; i < totalTokens; i++) {
+            tokenIds[i] = i + 1; // Los IDs empiezan en 1
+        }
+        
+        return tokenIds;
+    }
+    
+    /**
+     * @dev Función para obtener todas las transferencias del sistema (solo admin)
+     * @return uint256[] Array de todos los IDs de transferencias
+     */
+    function getAllTransferIds() public view onlyAdmin returns (uint256[] memory) {
+        uint256 totalTransfers = nextTransferId - 1;
+        uint256[] memory transferIds = new uint256[](totalTransfers);
+        
+        for (uint256 i = 0; i < totalTransfers; i++) {
+            transferIds[i] = i + 1; // Los IDs empiezan en 1
+        }
+        
+        return transferIds;
     }
 }

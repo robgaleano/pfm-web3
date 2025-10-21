@@ -42,6 +42,7 @@ export interface Web3ContextType {
   provider: BrowserProvider | null;
   contract: Contract | null;
   isLoading: boolean;
+  isTransitioning: boolean; // ✅ Nuevo estado para transiciones
   
   // Usuario actual
   currentUser: User | null;
@@ -56,12 +57,14 @@ export interface Web3ContextType {
   getUserInfo: (address?: string) => Promise<User | null>;
   changeUserStatus: (userAddress: string, status: number) => Promise<void>;
   getAllUsers: () => Promise<User[]>;
+  getApprovedUsers: () => Promise<User[]>; // ✅ Nueva función pública
   
   // Funciones de tokens
   createToken: (name: string, totalSupply: number, features: string, parentId: number) => Promise<void>;
   getToken: (tokenId: number) => Promise<Token | null>;
   getUserTokens: (address?: string) => Promise<number[]>;
   getTokenBalance: (tokenId: number, address?: string) => Promise<number>;
+  getAllTokenIds: () => Promise<number[]>; // ✅ Nueva función para admin
   
   // Funciones de transferencias
   transferToken: (to: string, tokenId: number, amount: number) => Promise<void>;
@@ -70,6 +73,7 @@ export interface Web3ContextType {
   getTransfer: (transferId: number) => Promise<Transfer | null>;
   getUserTransfers: (address?: string) => Promise<number[]>;
   getPendingTransfers: (address?: string) => Promise<number[]>;
+  getAllTransferIds: () => Promise<number[]>; // ✅ Nueva función para admin
   
   // Refresh
   refreshData: () => Promise<void>;
@@ -84,6 +88,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   const [provider, setProvider] = useState<BrowserProvider | null>(null);
   const [contract, setContract] = useState<Contract | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTransitioning, setIsTransitioning] = useState(false); // ✅ Estado de transición
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [shouldNavigateHome, setShouldNavigateHome] = useState(false);
@@ -91,27 +96,6 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   // Verificar conexión persistente al cargar
   useEffect(() => {
     checkPersistedConnection();
-    
-    // Verificar si hay un toast pendiente después de navegación
-    if (typeof window !== 'undefined') {
-      const pendingToast = sessionStorage.getItem('pending-toast');
-      if (pendingToast) {
-        try {
-          const { type, message, description } = JSON.parse(pendingToast);
-          // Mostrar el toast después de un pequeño delay para asegurar que el DOM esté listo
-          setTimeout(() => {
-            toast[type as 'success' | 'error' | 'info' | 'warning'](message, {
-              description,
-              duration: 6000
-            });
-          }, 500);
-          sessionStorage.removeItem('pending-toast');
-        } catch (error) {
-          logger.error(`Error showing pending toast: ${error}`);
-          sessionStorage.removeItem('pending-toast');
-        }
-      }
-    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
@@ -136,27 +120,10 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     if (shouldNavigateHome && typeof window !== 'undefined') {
       setShouldNavigateHome(false);
       
-      // Mostrar toast ANTES de navegar
-      const toastId = toast.info('Redirigiendo a la página principal...', {
-        duration: Infinity, // No se cierra automáticamente
-        description: 'Cargando tu información de usuario'
-      });
-      
-      // Delay para permitir que el toast se muestre ANTES de recargar
+      // ✅ Navegación simple sin toast (el loader ya indica el proceso)
       setTimeout(() => {
-        // Guardar el toast en sessionStorage para mostrarlo después de recargar
-        sessionStorage.setItem('pending-toast', JSON.stringify({
-          type: 'info',
-          message: 'Cuenta cambiada exitosamente',
-          description: 'Tu información de usuario ha sido actualizada'
-        }));
-        
-        // Cerrar el toast actual antes de navegar
-        toast.dismiss(toastId);
-        
-        // Navegar
         window.location.href = '/';
-      }, 1000); // 1 segundo de delay
+      }, 500);
     }
   }, [shouldNavigateHome]);
 
@@ -332,6 +299,9 @@ export function Web3Provider({ children }: { children: ReactNode }) {
         const newAccount = accounts[0];
         logger.info(`Account changed to: ${newAccount}`);
         
+        // ✅ Activar estado de transición
+        setIsTransitioning(true);
+        
         setAccount(newAccount);
         localStorage.setItem('supply-chain-account', newAccount);
         
@@ -339,8 +309,10 @@ export function Web3Provider({ children }: { children: ReactNode }) {
           // Cargar datos del nuevo usuario
           await loadUserData(newAccount, contract);
           
+          // ✅ Delay mínimo para que se vea el loading (mejor UX)
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          
           // Activar navegación
-          // El toast se mostrará antes y después de la navegación
           setShouldNavigateHome(true);
         }
       }
@@ -399,6 +371,18 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const getApprovedUsers = async (): Promise<User[]> => {
+    if (!contract) throw new Error('Contract not connected');
+    
+    const users = await contract.getApprovedUsers();
+    return users.map((user: any) => ({
+      id: Number(user.id),
+      userAddress: user.userAddress,
+      role: user.role,
+      status: ['Pending', 'Approved', 'Rejected', 'Canceled'][user.status] as any,
+    }));
+  };
+
   // Funciones de tokens
   const createToken = async (name: string, totalSupply: number, features: string, parentId: number) => {
     if (!contract) throw new Error('Contract not connected');
@@ -446,6 +430,15 @@ export function Web3Provider({ children }: { children: ReactNode }) {
 
     const balance = await contract.getTokenBalance(tokenId, targetAddress);
     return Number(balance);
+  };
+
+  // ✅ Nueva función para admin: obtener todos los tokens
+  const getAllTokenIds = async (): Promise<number[]> => {
+    if (!contract) throw new Error('Contract not connected');
+    if (!isAdmin) throw new Error('Only admin can access all tokens');
+
+    const tokenIds = await contract.getAllTokenIds();
+    return tokenIds.map((id: any) => Number(id));
   };
 
   // Funciones de transferencias
@@ -513,6 +506,15 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     return transfers.map((transfer: any) => Number(transfer));
   };
 
+  // ✅ Nueva función para admin: obtener todas las transferencias
+  const getAllTransferIds = async (): Promise<number[]> => {
+    if (!contract) throw new Error('Contract not connected');
+    if (!isAdmin) throw new Error('Only admin can access all transfers');
+
+    const transferIds = await contract.getAllTransferIds();
+    return transferIds.map((id: any) => Number(id));
+  };
+
   // Refresh data
   const refreshData = async () => {
     if (account && contract) {
@@ -527,6 +529,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     provider,
     contract,
     isLoading,
+    isTransitioning, // ✅ Agregar estado de transición
     currentUser,
     isAdmin,
     
@@ -539,12 +542,14 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     getUserInfo,
     changeUserStatus,
     getAllUsers,
+    getApprovedUsers, // ✅ Nueva función pública
     
     // Funciones de tokens
     createToken,
     getToken,
     getUserTokens,
     getTokenBalance,
+    getAllTokenIds, // ✅ Nueva función para admin
     
     // Funciones de transferencias
     transferToken,
@@ -553,6 +558,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     getTransfer,
     getUserTransfers,
     getPendingTransfers,
+    getAllTransferIds, // ✅ Nueva función para admin
     
     // Refresh
     refreshData,

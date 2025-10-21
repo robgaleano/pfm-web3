@@ -97,7 +97,68 @@
   },
   {
     "type": "function",
+    "name": "getAllTokenIds",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getAllTransferIds",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "getAllUsers",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple[]",
+        "internalType": "struct SupplyChain.User[]",
+        "components": [
+          {
+            "name": "id",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "userAddress",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "role",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "status",
+            "type": "uint8",
+            "internalType": "enum SupplyChain.UserStatus"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getApprovedUsers",
     "inputs": [],
     "outputs": [
       {

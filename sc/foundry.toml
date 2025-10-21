@@ -23,3 +23,13 @@ gas_price = 20000000000
 # Configuración de RPC para desarrollo local
 [rpc_endpoints]
 local = "http://localhost:8545"
+
+# Configuración para etherscan (no usado en local, pero útil para testnets)
+[etherscan]
+# No aplicable para Anvil local
+
+# Profile para variables de entorno de deployment
+[profile.env]
+# Estas se pueden sobrescribir con .env
+ANVIL_RPC_URL = "http://localhost:8545"
+DEPLOYER_PRIVATE_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
