@@ -65,7 +65,8 @@ export default function TransferTokenPage() {
         setBalance(tokenBalance);
 
         // Obtener usuarios válidos según el rol
-        const allUsers = await getApprovedUsers(); // ✅ Usar función pública
+        const allUsers = await getApprovedUsers();
+        
         const userRole = currentUser.role.toLowerCase();
         
         let targetRole = '';
@@ -74,12 +75,20 @@ export default function TransferTokenPage() {
         else if (userRole === 'retailer') targetRole = 'consumer';
 
         const valid = allUsers.filter(
-          (u: User) => 
-            u.status === 'Approved' && 
-            u.role.toLowerCase() === targetRole &&
-            u.userAddress.toLowerCase() !== account.toLowerCase()
+          (u: User) => {
+            const userRoleTrimmed = u.role.toLowerCase().trim();
+            const isApproved = u.status === 'Approved';
+            const isTargetRole = userRoleTrimmed === targetRole;
+            const isNotSelf = u.userAddress.toLowerCase() !== account.toLowerCase();
+            
+            return isApproved && isTargetRole && isNotSelf;
+          }
         );
 
+        logger.info(`Valid recipients found: ${valid.length}`);
+        if (valid.length > 0) {
+          logger.info(`Valid recipients addresses: ${valid.map(v => v.userAddress).join(', ')}`);
+        }
         setValidRecipients(valid);
       } catch (error) {
         logger.error(`Error loading data: ${error}`);
@@ -181,9 +190,17 @@ export default function TransferTokenPage() {
 
         {validRecipients.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-600 mb-4">
-              No hay usuarios de tipo <strong>{getNextRoleInfo()}</strong> disponibles para recibir la transferencia.
-            </p>
+            <div className="mb-4">
+              <p className="text-gray-600 mb-2">
+                No hay usuarios de tipo <strong>{getNextRoleInfo()}</strong> disponibles para recibir la transferencia.
+              </p>
+              <p className="text-sm text-gray-500">
+                Como <strong>{getRoleLabel(currentUser?.role || '')}</strong>, solo puedes transferir a usuarios de tipo <strong>{getNextRoleInfo()}</strong>.
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Por favor, solicita al administrador que apruebe usuarios de tipo {getNextRoleInfo()}.
+              </p>
+            </div>
             <Button variant="outline" onClick={() => router.back()}>
               Volver
             </Button>

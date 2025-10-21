@@ -487,6 +487,35 @@ contract SupplyChain {
     }
     
     /**
+     * @dev Función alternativa que devuelve solo IDs de usuarios aprobados
+     * @notice Esta función resuelve problemas de compatibilidad con ethers.js
+     * @return uint256[] Array de IDs de usuarios aprobados
+     */
+    function getApprovedUserIds() public view returns (uint256[] memory) {
+        // Primero contamos cuántos usuarios aprobados hay
+        uint256 approvedCount = 0;
+        for (uint256 i = 1; i < nextUserId; i++) {
+            if (users[i].status == UserStatus.Approved) {
+                approvedCount++;
+            }
+        }
+
+        // Creamos el array con el tamaño exacto
+        uint256[] memory approvedIds = new uint256[](approvedCount);
+        uint256 currentIndex = 0;
+        
+        // Llenamos el array solo con IDs de usuarios aprobados
+        for (uint256 i = 1; i < nextUserId; i++) {
+            if (users[i].status == UserStatus.Approved) {
+                approvedIds[currentIndex] = i;
+                currentIndex++;
+            }
+        }
+        
+        return approvedIds;
+    }
+    
+    /**
      * @dev Función para obtener transferencias pendientes para un usuario
      * @param userAddress Dirección del usuario
      * @return uint256[] Array de IDs de transferencias pendientes
