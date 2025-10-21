@@ -374,13 +374,29 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   const getApprovedUsers = async (): Promise<User[]> => {
     if (!contract) throw new Error('Contract not connected');
     
-    const users = await contract.getApprovedUsers();
-    return users.map((user: any) => ({
-      id: Number(user.id),
-      userAddress: user.userAddress,
-      role: user.role,
-      status: ['Pending', 'Approved', 'Rejected', 'Canceled'][user.status] as any,
-    }));
+    try {
+      // Obtener solo los IDs (esto funciona siempre con ethers.js)
+      const userIds = await contract.getApprovedUserIds();
+      
+      // Obtener los detalles de cada usuario individualmente
+      const usersPromises = userIds.map(async (id: any) => {
+        const userId = Number(id);
+        const user = await contract.users(userId);
+        return {
+          id: userId,
+          userAddress: user.userAddress,
+          role: user.role,
+          status: ['Pending', 'Approved', 'Rejected', 'Canceled'][Number(user.status)] as any,
+        };
+      });
+      
+      const mappedUsers = await Promise.all(usersPromises);
+      
+      return mappedUsers;
+    } catch (error) {
+      logger.error(`Error in getApprovedUsers: ${error}`);
+      throw error;
+    }
   };
 
   // Funciones de tokens
