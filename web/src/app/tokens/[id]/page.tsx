@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useWallet, useTokens } from '@/hooks/useWallet';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import logger from '@/lib/logger';
 import Link from 'next/link';
 
@@ -54,12 +55,16 @@ export default function TokenDetailPage() {
           });
           setBalance(tokenBalance);
         } else {
-          alert('Token no encontrado');
+          toast.error('Token no encontrado', {
+            description: 'El token solicitado no existe'
+          });
           router.push('/tokens');
         }
       } catch (error) {
         logger.error(`Error loading token: ${error}`);
-        alert('Error al cargar token');
+        toast.error('Error al cargar token', {
+          description: error instanceof Error ? error.message : 'Intenta nuevamente'
+        });
         router.push('/tokens');
       } finally {
         setIsLoading(false);

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useWallet, useTransfers, useTokens } from '@/hooks/useWallet';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import logger from '@/lib/logger';
 
 interface Transfer {
@@ -93,11 +94,15 @@ export default function TransfersPage() {
     try {
       setProcessingId(transferId);
       await acceptTransfer(transferId);
-      alert('Transferencia aceptada exitosamente');
+      toast.success('Transferencia aceptada exitosamente', {
+        description: `Transfer ID: ${transferId}`
+      });
       await loadTransfers();
     } catch (error) {
       logger.error(`Error accepting transfer: ${error}`);
-      alert(error instanceof Error ? error.message : 'Error al aceptar transferencia');
+      toast.error('Error al aceptar transferencia', {
+        description: error instanceof Error ? error.message : 'Intenta nuevamente'
+      });
     } finally {
       setProcessingId(null);
     }
@@ -111,11 +116,15 @@ export default function TransfersPage() {
     try {
       setProcessingId(transferId);
       await rejectTransfer(transferId);
-      alert('Transferencia rechazada');
+      toast.info('Transferencia rechazada', {
+        description: `Transfer ID: ${transferId}`
+      });
       await loadTransfers();
     } catch (error) {
       logger.error(`Error rejecting transfer: ${error}`);
-      alert(error instanceof Error ? error.message : 'Error al rechazar transferencia');
+      toast.error('Error al rechazar transferencia', {
+        description: error instanceof Error ? error.message : 'Intenta nuevamente'
+      });
     } finally {
       setProcessingId(null);
     }
