@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 import logger from '@/lib/logger';
 
 interface User {
@@ -40,7 +41,9 @@ export default function TransferTokenPage() {
     }
 
     if (currentUser.role.toLowerCase() === 'consumer') {
-      alert('Los consumidores no pueden transferir tokens');
+      toast.warning('Acción no permitida', {
+        description: 'Los consumidores no pueden transferir tokens'
+      });
       router.push('/tokens');
       return;
     }
@@ -51,7 +54,9 @@ export default function TransferTokenPage() {
         const tokenBalance = await getMyTokenBalance(tokenId);
         
         if (!tokenData || tokenBalance === 0) {
-          alert('No tienes balance de este token');
+          toast.warning('Sin balance', {
+            description: 'No tienes balance de este token'
+          });
           router.push('/tokens');
           return;
         }
@@ -78,7 +83,9 @@ export default function TransferTokenPage() {
         setValidRecipients(valid);
       } catch (error) {
         logger.error(`Error loading data: ${error}`);
-        alert('Error al cargar datos');
+        toast.error('Error al cargar datos', {
+          description: 'No se pudieron cargar los datos del token'
+        });
         router.push('/tokens');
       }
     };
@@ -96,18 +103,24 @@ export default function TransferTokenPage() {
     e.preventDefault();
 
     if (!recipient) {
-      alert('Por favor selecciona un destinatario');
+      toast.warning('Selecciona un destinatario', {
+        description: 'Por favor selecciona un destinatario para la transferencia'
+      });
       return;
     }
 
     const transferAmount = parseInt(amount);
     if (!transferAmount || transferAmount <= 0) {
-      alert('Por favor ingresa una cantidad válida');
+      toast.warning('Cantidad inválida', {
+        description: 'Por favor ingresa una cantidad válida mayor a 0'
+      });
       return;
     }
 
     if (transferAmount > balance) {
-      alert('No tienes suficiente balance');
+      toast.warning('Balance insuficiente', {
+        description: `Tu balance es ${balance}, no puedes transferir ${transferAmount}`
+      });
       return;
     }
 
@@ -115,11 +128,18 @@ export default function TransferTokenPage() {
       setIsLoading(true);
       await transferToken(recipient, tokenId, transferAmount);
       
-      alert('Transferencia iniciada exitosamente. Esperando aceptación del destinatario.');
-      router.push('/transfers');
+      toast.success('Transferencia iniciada exitosamente', {
+        description: 'Esperando aceptación del destinatario'
+      });
+      
+      setTimeout(() => {
+        router.push('/transfers');
+      }, 1000);
     } catch (error) {
       logger.error(`Error transferring token: ${error}`);
-      alert(error instanceof Error ? error.message : 'Error al transferir token');
+      toast.error('Error al transferir token', {
+        description: error instanceof Error ? error.message : 'Intenta nuevamente'
+      });
     } finally {
       setIsLoading(false);
     }

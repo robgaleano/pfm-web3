@@ -6,6 +6,7 @@ import { useWallet, useUsers } from '@/hooks/useWallet';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 import logger from '@/lib/logger';
 
 interface User {
@@ -75,11 +76,15 @@ export default function AdminUsersPage() {
     try {
       setProcessingAddress(userAddress);
       await approveUser(userAddress);
-      alert('Usuario aprobado exitosamente');
+      toast.success('Usuario aprobado exitosamente', {
+        description: `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`
+      });
       await loadUsers();
     } catch (error) {
       logger.error(`Error approving user: ${error}`);
-      alert(error instanceof Error ? error.message : 'Error al aprobar usuario');
+      toast.error('Error al aprobar usuario', {
+        description: error instanceof Error ? error.message : 'Intenta nuevamente'
+      });
     } finally {
       setProcessingAddress(null);
     }
@@ -93,11 +98,15 @@ export default function AdminUsersPage() {
     try {
       setProcessingAddress(userAddress);
       await rejectUser(userAddress);
-      alert('Usuario rechazado');
+      toast.info('Usuario rechazado', {
+        description: `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`
+      });
       await loadUsers();
     } catch (error) {
       logger.error(`Error rejecting user: ${error}`);
-      alert(error instanceof Error ? error.message : 'Error al rechazar usuario');
+      toast.error('Error al rechazar usuario', {
+        description: error instanceof Error ? error.message : 'Intenta nuevamente'
+      });
     } finally {
       setProcessingAddress(null);
     }

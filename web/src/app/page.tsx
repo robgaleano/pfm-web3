@@ -13,6 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Sprout, Factory, Store, ShoppingCart } from "lucide-react";
+import { toast } from "sonner";
 import logger from "@/lib/logger";
 
 export default function Home() {
@@ -33,19 +35,23 @@ export default function Home() {
 
   const handleRequestRole = async () => {
     if (!selectedRole) {
-      alert("Por favor selecciona un rol");
+      toast.warning("Selecciona un rol", {
+        description: "Por favor selecciona un rol antes de continuar"
+      });
       return;
     }
 
     try {
       setIsSubmitting(true);
       await requestRole(selectedRole);
-      alert(
-        "Solicitud enviada exitosamente. Espera la aprobación del administrador."
-      );
+      toast.success("Solicitud enviada exitosamente", {
+        description: "Espera la aprobación del administrador"
+      });
     } catch (error) {
       logger.error(`Error requesting role: ${error}`);
-      alert("Error al solicitar rol");
+      toast.error("Error al solicitar rol", {
+        description: error instanceof Error ? error.message : "Intenta nuevamente"
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -129,11 +135,29 @@ export default function Home() {
                   <SelectValue placeholder="Selecciona un rol" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="producer">Producer (Productor)</SelectItem>
-                  <SelectItem value="factory">Factory (Fábrica)</SelectItem>
-                  <SelectItem value="retailer">Retailer (Minorista)</SelectItem>
+                  <SelectItem value="producer">
+                    <div className="flex items-center gap-2">
+                      <Sprout className="size-4 text-green-600" />
+                      <span>Producer (Productor)</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="factory">
+                    <div className="flex items-center gap-2">
+                      <Factory className="size-4 text-blue-600" />
+                      <span>Factory (Fábrica)</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="retailer">
+                    <div className="flex items-center gap-2">
+                      <Store className="size-4 text-purple-600" />
+                      <span>Retailer (Minorista)</span>
+                    </div>
+                  </SelectItem>
                   <SelectItem value="consumer">
-                    Consumer (Consumidor)
+                    <div className="flex items-center gap-2">
+                      <ShoppingCart className="size-4 text-orange-600" />
+                      <span>Consumer (Consumidor)</span>
+                    </div>
                   </SelectItem>
                 </SelectContent>
               </Select>

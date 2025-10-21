@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 import logger from '@/lib/logger';
 
 export default function CreateTokenPage() {
@@ -66,12 +67,16 @@ export default function CreateTokenPage() {
     e.preventDefault();
 
     if (!name.trim() || !totalSupply || parseInt(totalSupply) <= 0) {
-      alert('Por favor completa todos los campos correctamente');
+      toast.warning('Completa todos los campos', {
+        description: 'Por favor completa todos los campos correctamente'
+      });
       return;
     }
 
     if ((role === 'factory' || role === 'retailer') && parentId === '0') {
-      alert('Debes seleccionar un token padre para procesar');
+      toast.warning('Selecciona un token padre', {
+        description: 'Debes seleccionar un token padre para procesar'
+      });
       return;
     }
 
@@ -84,11 +89,18 @@ export default function CreateTokenPage() {
         parseInt(parentId)
       );
       
-      alert('Token creado exitosamente');
-      router.push('/tokens');
+      toast.success('Token creado exitosamente', {
+        description: 'Redirigiendo a la lista de tokens...'
+      });
+      
+      setTimeout(() => {
+        router.push('/tokens');
+      }, 1000);
     } catch (error) {
       logger.error(`Error creating token: ${error}`);
-      alert(error instanceof Error ? error.message : 'Error al crear token');
+      toast.error('Error al crear token', {
+        description: error instanceof Error ? error.message : 'Intenta nuevamente'
+      });
     } finally {
       setIsLoading(false);
     }
