@@ -14,14 +14,14 @@ import logger from '@/lib/logger';
 export default function CreateTokenPage() {
   const router = useRouter();
   const { currentUser, account, isApproved } = useWallet();
-  const { createToken, getMyTokens, getToken, getMyTokenBalance } = useTokens();
+  const { createToken, getMyTokens, getToken, getMyTokenBalance, getTokenLevel } = useTokens();
   
   const [name, setName] = useState('');
   const [totalSupply, setTotalSupply] = useState('');
   const [features, setFeatures] = useState('');
   const [parentId, setParentId] = useState('0');
   const [isLoading, setIsLoading] = useState(false);
-  const [availableTokens, setAvailableTokens] = useState<Array<{ id: number; name: string; balance: number }>>([]);
+  const [availableTokens, setAvailableTokens] = useState<Array<{ id: number; name: string; balance: number; level: number }>>([]);
 
   useEffect(() => {
     if (!account || !currentUser || !isApproved) {
@@ -45,17 +45,27 @@ export default function CreateTokenPage() {
               const token = await getToken(id);
               const balance = await getMyTokenBalance(id);
               if (!token || balance === 0) return null;
-              return { id: token.id, name: token.name, balance };
+              
+              // Calcular el nivel del token
+              const level = await getTokenLevel(id);
+              
+              // Filtrar según el rol del usuario
+              // Factory solo puede usar tokens de nivel 0 (materias primas)
+              // Retailer solo puede usar tokens de nivel 1 (productos procesados)
+              if (role === 'factory' && level !== 0) return null;
+              if (role === 'retailer' && level !== 1) return null;
+              
+              return { id: token.id, name: token.name, balance, level };
             })
           );
-          setAvailableTokens(tokensWithBalance.filter((t): t is { id: number; name: string; balance: number } => t !== null));
+          setAvailableTokens(tokensWithBalance.filter((t): t is { id: number; name: string; balance: number; level: number } => t !== null));
         } catch (error) {
           logger.error(`Error loading tokens: ${error}`);
         }
       };
       loadTokens();
     }
-  }, [account, currentUser, isApproved, router, getMyTokens, getToken, getMyTokenBalance]);
+  }, [account, currentUser, isApproved, router, getMyTokens, getToken, getMyTokenBalance, getTokenLevel]);
 
   if (!currentUser || !isApproved) {
     return null;
@@ -65,6 +75,9 @@ export default function CreateTokenPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Prevenir doble submit
+    if (isLoading) return;
 
     if (!name.trim() || !totalSupply || parseInt(totalSupply) <= 0) {
       toast.warning('Completa todos los campos', {
@@ -80,8 +93,9 @@ export default function CreateTokenPage() {
       return;
     }
 
+    setIsLoading(true);
+    
     try {
-      setIsLoading(true);
       await createToken(
         name.trim(),
         parseInt(totalSupply),
@@ -97,12 +111,11 @@ export default function CreateTokenPage() {
         router.push('/tokens');
       }, 1000);
     } catch (error) {
+      setIsLoading(false);
       logger.error(`Error creating token: ${error}`);
       toast.error('Error al crear token', {
         description: error instanceof Error ? error.message : 'Intenta nuevamente'
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -129,11 +142,22 @@ export default function CreateTokenPage() {
 
           {(role === 'factory' || role === 'retailer') && (
             <div className="space-y-2">
-              <Label htmlFor="parentId">Token Base (Materia Prima)</Label>
+              <Label htmlFor="parentId">
+                {role === 'factory' ? 'Materia Prima (Nivel 0)' : 'Producto Procesado (Nivel 1)'}
+              </Label>
               {availableTokens.length === 0 ? (
-                <p className="text-sm text-red-600">
-                  No tienes tokens con balance disponible. Debes recibir materiales primero.
-                </p>
+                <div className="p-4 border border-yellow-300 bg-yellow-50 rounded-md">
+                  <p className="text-sm text-yellow-800 font-medium">
+                    {role === 'factory' 
+                      ? '⚠️ No tienes materias primas disponibles (nivel 0)'
+                      : '⚠️ No tienes productos procesados disponibles (nivel 1)'}
+                  </p>
+                  <p className="text-xs text-yellow-700 mt-1">
+                    {role === 'factory'
+                      ? 'Necesitas recibir materias primas de un Productor antes de poder crear productos procesados.'
+                      : 'Necesitas recibir productos procesados de una Fábrica antes de poder crear productos finales.'}
+                  </p>
+                </div>
               ) : (
                 <Select value={parentId} onValueChange={setParentId}>
                   <SelectTrigger id="parentId">
@@ -142,7 +166,7 @@ export default function CreateTokenPage() {
                   <SelectContent>
                     {availableTokens.map((token) => (
                       <SelectItem key={token.id} value={token.id.toString()}>
-                        {token.name} (Balance: {token.balance})
+                        {token.name} (Balance: {token.balance}) - Nivel {token.level}
                       </SelectItem>
                     ))}
                   </SelectContent>

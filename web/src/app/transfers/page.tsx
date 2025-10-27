@@ -94,6 +94,17 @@ export default function TransfersPage() {
     }
 
     loadTransfers();
+    
+    // ✅ Recargar cuando la página gana foco (usuario vuelve de otra pestaña o navegación)
+    const handleFocus = () => {
+      loadTransfers();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, currentUser, isApproved, isAdmin, router]);
 
@@ -102,6 +113,9 @@ export default function TransfersPage() {
   }
 
   const handleAccept = async (transferId: number) => {
+    // Prevenir doble click
+    if (processingId !== null) return;
+
     try {
       setProcessingId(transferId);
       await acceptTransfer(transferId);
@@ -120,6 +134,9 @@ export default function TransfersPage() {
   };
 
   const handleReject = async (transferId: number) => {
+    // Prevenir doble click
+    if (processingId !== null) return;
+
     if (!confirm('¿Estás seguro de rechazar esta transferencia?')) {
       return;
     }
@@ -153,15 +170,28 @@ export default function TransfersPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">
-          {isAdmin ? 'Todas las Transferencias del Sistema' : 'Transferencias'}
-        </h1>
-        {isAdmin && (
-          <p className="text-sm text-gray-600 mt-1">
-            Vista de administrador - Modo solo lectura
-          </p>
-        )}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">
+            {isAdmin ? 'Todas las Transferencias del Sistema' : 'Transferencias'}
+          </h1>
+          {isAdmin && (
+            <p className="text-sm text-gray-600 mt-1">
+              Vista de administrador - Modo solo lectura
+            </p>
+          )}
+        </div>
+        <Button
+          onClick={() => loadTransfers()}
+          disabled={isLoading}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <svg className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          {isLoading ? 'Actualizando...' : 'Actualizar'}
+        </Button>
       </div>
 
       {/* Transferencias Pendientes - Solo mostrar si NO es admin */}

@@ -253,6 +253,9 @@ contract SupplyChain {
             require(parentId > 0 && parentId < nextTokenId, "Invalid parent token");
             // Verificar que el usuario tenga balance del token padre
             require(tokenBalances[parentId][msg.sender] > 0, "No balance of parent token");
+            
+            // ✅ NUEVA VALIDACIÓN: Verificar que el token padre sea del nivel correcto
+            _validateTokenParentLevel(user.role, parentId);
         } else {
             revert("Consumers cannot create tokens");
         }
@@ -317,6 +320,9 @@ contract SupplyChain {
         
         // Validar transferencia según roles
         _validateTransferRoles(msg.sender, to);
+        
+        // ✅ NUEVA VALIDACIÓN: Verificar que el token sea del nivel correcto para el sender
+        _validateTokenLevelForTransfer(msg.sender, tokenId);
         
         uint256 transferId = nextTransferId++;
         
@@ -411,6 +417,81 @@ contract SupplyChain {
      */
     function getUserTransfers(address userAddress) public view returns (uint256[] memory) {
         return userTransfers[userAddress];
+    }
+    
+    /**
+     * @dev Función interna para calcular el nivel de un token en la cadena
+     * @param tokenId ID del token
+     * @return uint256 Nivel del token (0 = materia prima, 1 = factory, 2 = retailer)
+     */
+    function _getTokenLevel(uint256 tokenId) internal view returns (uint256) {
+        Token memory token = tokens[tokenId];
+        
+        // Si no tiene padre, es nivel 0 (materia prima de producer)
+        if (token.parentId == 0) {
+            return 0;
+        }
+        
+        // Recursivamente calcular el nivel sumando 1 al nivel del padre
+        return 1 + _getTokenLevel(token.parentId);
+    }
+    
+    /**
+     * @dev Función interna para validar que el token padre sea del nivel correcto
+     * @param creatorRole Rol del creador (factory o retailer)
+     * @param parentTokenId ID del token padre
+     */
+    function _validateTokenParentLevel(string memory creatorRole, uint256 parentTokenId) internal view {
+        uint256 parentLevel = _getTokenLevel(parentTokenId);
+        
+        // Factory debe crear desde nivel 0 (materia prima de producer)
+        if (keccak256(bytes(creatorRole)) == keccak256(bytes("factory"))) {
+            require(
+                parentLevel == 0,
+                "Factory can only create products from raw materials (producer tokens)"
+            );
+        }
+        // Retailer debe crear desde nivel 1 (productos de factory)
+        else if (keccak256(bytes(creatorRole)) == keccak256(bytes("retailer"))) {
+            require(
+                parentLevel == 1,
+                "Retailer can only create products from factory tokens"
+            );
+        }
+    }
+    
+    /**
+     * @dev Función interna para validar que el token sea del nivel correcto para transferir
+     * @param from Dirección del remitente
+     * @param tokenId ID del token a transferir
+     */
+    function _validateTokenLevelForTransfer(address from, uint256 tokenId) internal view {
+        User memory fromUser = users[addressToUserId[from]];
+        uint256 tokenLevel = _getTokenLevel(tokenId);
+        
+        bytes32 fromRole = keccak256(bytes(fromUser.role));
+        
+        // Producer solo puede transferir tokens nivel 0 (materias primas que creó)
+        if (fromRole == keccak256(bytes("producer"))) {
+            require(
+                tokenLevel == 0,
+                "Producer can only transfer raw materials (level 0 tokens)"
+            );
+        }
+        // Factory solo puede transferir tokens nivel 1 (productos que creó desde materias primas)
+        else if (fromRole == keccak256(bytes("factory"))) {
+            require(
+                tokenLevel == 1,
+                "Factory can only transfer processed products (level 1 tokens)"
+            );
+        }
+        // Retailer solo puede transferir tokens nivel 2 (productos finales que creó)
+        else if (fromRole == keccak256(bytes("retailer"))) {
+            require(
+                tokenLevel == 2,
+                "Retailer can only transfer final products (level 2 tokens)"
+            );
+        }
     }
     
     /**

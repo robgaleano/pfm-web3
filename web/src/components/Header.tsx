@@ -68,7 +68,7 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
             <Package className="h-8 w-8 text-blue-600" />
-            <span className="text-xl font-bold text-gray-900">
+            <span className="hidden lg:inline text-l font-bold text-gray-900">
               Supply Chain Tracker
             </span>
           </Link>

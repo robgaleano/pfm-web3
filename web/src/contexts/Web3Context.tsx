@@ -62,6 +62,7 @@ export interface Web3ContextType {
   // Funciones de tokens
   createToken: (name: string, totalSupply: number, features: string, parentId: number) => Promise<void>;
   getToken: (tokenId: number) => Promise<Token | null>;
+  getTokenLevel: (tokenId: number) => Promise<number>; // ✅ Nueva función para calcular nivel
   getUserTokens: (address?: string) => Promise<number[]>;
   getTokenBalance: (tokenId: number, address?: string) => Promise<number>;
   getAllTokenIds: () => Promise<number[]>; // ✅ Nueva función para admin
@@ -428,6 +429,27 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     }
   };
 
+  const getTokenLevel = async (tokenId: number): Promise<number> => {
+    if (!contract) throw new Error('Contract not connected');
+    
+    try {
+      const token = await getToken(tokenId);
+      if (!token) return 0;
+      
+      // Si no tiene padre, es nivel 0 (materia prima)
+      if (token.parentId === 0) {
+        return 0;
+      }
+      
+      // Recursivamente calcular el nivel
+      const parentLevel = await getTokenLevel(token.parentId);
+      return parentLevel + 1;
+    } catch (error) {
+      logger.error(`Error calculating token level for token ID ${tokenId}: ${error}`);
+      return 0;
+    }
+  };
+
   const getUserTokens = async (address?: string): Promise<number[]> => {
     if (!contract) throw new Error('Contract not connected');
     
@@ -563,6 +585,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     // Funciones de tokens
     createToken,
     getToken,
+    getTokenLevel, // ✅ Nueva función para calcular nivel
     getUserTokens,
     getTokenBalance,
     getAllTokenIds, // ✅ Nueva función para admin

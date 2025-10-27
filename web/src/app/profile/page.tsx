@@ -30,8 +30,9 @@ export default function ProfilePage() {
     const loadStats = async () => {
       try {
         setIsLoading(true);
-        if (isApproved) {
+        if (isApproved && currentUser.role.toLowerCase() !== 'admin') {
           const data = await getDashboardData();
+          
           if (data) {
             setStats({
               totalTokens: data.totalTokens,
@@ -128,7 +129,7 @@ export default function ProfilePage() {
         </Card>
 
         {/* Estadísticas */}
-        {isApproved && !isLoading && (
+        {isApproved && !isLoading && currentUser.role.toLowerCase() !== 'admin' && (
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Estadísticas</h2>
             
@@ -191,7 +192,7 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Link href="/tokens">
                 <Button variant="outline" className="w-full">
-                  Ver Mis Tokens
+                  Ver Tokens
                 </Button>
               </Link>
               
@@ -207,10 +208,19 @@ export default function ProfilePage() {
                 </Button>
               </Link>
 
-              {currentUser.role.toLowerCase() !== 'consumer' && (
+              {currentUser.role.toLowerCase() !== 'consumer' && 
+               currentUser.role.toLowerCase() !== 'admin' && (
                 <Link href="/tokens/create">
                   <Button variant="outline" className="w-full">
                     Crear Token
+                  </Button>
+                </Link>
+              )}
+
+              {currentUser.role.toLowerCase() === 'admin' && (
+                <Link href="/admin">
+                  <Button variant="outline" className="w-full">
+                    Panel de Administración
                   </Button>
                 </Link>
               )}

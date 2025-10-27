@@ -113,6 +113,7 @@ export function useTokens() {
   const {
     createToken,
     getToken,
+    getTokenLevel, // ✅ Nueva función para calcular nivel
     getUserTokens,
     getTokenBalance,
     getAllTokenIds, // ✅ Nueva función para admin
@@ -124,6 +125,7 @@ export function useTokens() {
   return {
     createToken,
     getToken,
+    getTokenLevel, // ✅ Exponer función de nivel
     getUserTokens,
     getTokenBalance,
     getAllTokenIds, // ✅ Exponer para admin

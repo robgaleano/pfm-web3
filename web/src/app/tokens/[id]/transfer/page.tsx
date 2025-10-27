@@ -23,16 +23,18 @@ export default function TransferTokenPage() {
   const tokenId = parseInt(params.id as string);
   
   const { currentUser, account, isApproved } = useWallet();
-  const { getToken, getMyTokenBalance } = useTokens();
-  const { transferToken } = useTransfers();
+  const { getToken, getMyTokenBalance, getTokenLevel } = useTokens();
+  const { transferToken, refreshData } = useTransfers();
   const { getApprovedUsers } = useUsers(); // ✅ Usar función pública
   
   const [tokenName, setTokenName] = useState('');
   const [balance, setBalance] = useState(0);
+  const [tokenLevel, setTokenLevel] = useState<number | null>(null);
   const [amount, setAmount] = useState('');
   const [recipient, setRecipient] = useState('');
   const [validRecipients, setValidRecipients] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [levelError, setLevelError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!account || !currentUser || !isApproved) {
@@ -64,10 +66,42 @@ export default function TransferTokenPage() {
         setTokenName(tokenData.name);
         setBalance(tokenBalance);
 
+        // ✅ Calcular nivel del token
+        const level = await getTokenLevel(tokenId);
+        setTokenLevel(level);
+
+        // ✅ Validar que el nivel del token corresponde al rol del usuario
+        const userRole = currentUser.role.toLowerCase();
+        let errorMessage: string | null = null;
+
+        if (userRole === 'producer') {
+          if (level !== 0) {
+            errorMessage = 'Como Productor, solo puedes transferir materias primas (nivel 0). Este token es de nivel ' + level + '.';
+          }
+        } else if (userRole === 'factory') {
+          if (level === 0) {
+            errorMessage = 'Como Fábrica, solo puedes transferir productos procesados (nivel 1). No puedes transferir materias primas (nivel 0) directamente a Minoristas.';
+          } else if (level !== 1) {
+            errorMessage = 'Como Fábrica, solo puedes transferir productos procesados (nivel 1). Este token es de nivel ' + level + '.';
+          }
+        } else if (userRole === 'retailer') {
+          if (level === 1) {
+            errorMessage = 'Como Minorista, solo puedes transferir productos finales (nivel 2). No puedes transferir productos de fábrica (nivel 1) directamente a Consumidores.';
+          } else if (level !== 2) {
+            errorMessage = 'Como Minorista, solo puedes transferir productos finales (nivel 2). Este token es de nivel ' + level + '.';
+          }
+        }
+
+        setLevelError(errorMessage);
+
+        // Si hay error de nivel, no cargar destinatarios
+        if (errorMessage) {
+          setValidRecipients([]);
+          return;
+        }
+
         // Obtener usuarios válidos según el rol
         const allUsers = await getApprovedUsers();
-        
-        const userRole = currentUser.role.toLowerCase();
         
         let targetRole = '';
         if (userRole === 'producer') targetRole = 'factory';
@@ -113,6 +147,9 @@ export default function TransferTokenPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Prevenir doble submit
+    if (isLoading) return;
+
     if (!recipient) {
       toast.warning('Selecciona un destinatario', {
         description: 'Por favor selecciona un destinatario para la transferencia'
@@ -135,24 +172,27 @@ export default function TransferTokenPage() {
       return;
     }
 
+    setIsLoading(true);
+
     try {
-      setIsLoading(true);
       await transferToken(recipient, tokenId, transferAmount);
       
       toast.success('Transferencia iniciada exitosamente', {
         description: 'Esperando aceptación del destinatario'
       });
       
+      // ✅ Refrescar datos del contexto antes de redirigir
+      await refreshData();
+      
       setTimeout(() => {
         router.push('/transfers');
-      }, 1000);
+      }, 500); // Reducido a 500ms ya que refreshData ya esperó
     } catch (error) {
+      setIsLoading(false);
       logger.error(`Error transferring token: ${error}`);
       toast.error('Error al transferir token', {
         description: error instanceof Error ? error.message : 'Intenta nuevamente'
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -186,9 +226,61 @@ export default function TransferTokenPage() {
           <p className="text-sm text-blue-800 mt-1">
             <strong>Tu Balance:</strong> {balance} unidades
           </p>
+          {tokenLevel !== null && (
+            <p className="text-sm text-blue-800 mt-1">
+              <strong>Nivel del Token:</strong> {tokenLevel} ({
+                tokenLevel === 0 ? 'Materia Prima' :
+                tokenLevel === 1 ? 'Producto Procesado' :
+                tokenLevel === 2 ? 'Producto Final' :
+                'Nivel ' + tokenLevel
+              })
+            </p>
+          )}
         </div>
 
-        {validRecipients.length === 0 ? (
+        {/* ✅ Mostrar error de nivel si existe */}
+        {levelError ? (
+          <div className="text-center py-8">
+            <div className="mb-6 p-4 bg-red-50 border-2 border-red-300 rounded-lg">
+              <h3 className="font-semibold text-lg mb-3 text-red-800 flex items-center justify-center gap-2">
+                <span className="text-2xl">🚫</span>
+                Transferencia No Permitida
+              </h3>
+              <p className="text-red-700 mb-4">
+                {levelError}
+              </p>
+              <div className="mt-4 p-3 bg-red-100 rounded border border-red-200">
+                <p className="text-sm text-red-800 font-semibold mb-2">
+                  📋 Reglas de la Cadena de Suministro:
+                </p>
+                <ul className="text-xs text-red-700 space-y-1 text-left">
+                  <li>• <strong>Productor</strong> → Solo transfiere <strong>materias primas (nivel 0)</strong> a Fábricas</li>
+                  <li>• <strong>Fábrica</strong> → Solo transfiere <strong>productos procesados (nivel 1)</strong> a Minoristas</li>
+                  <li>• <strong>Minorista</strong> → Solo transfiere <strong>productos finales (nivel 2)</strong> a Consumidores</li>
+                </ul>
+              </div>
+              <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+                <p className="text-sm text-blue-800">
+                  💡 <strong>¿Qué hacer?</strong>
+                </p>
+                <p className="text-xs text-blue-700 mt-1">
+                  {currentUser.role.toLowerCase() === 'factory' && tokenLevel === 0 && (
+                    <>Primero debes <strong>procesar</strong> este material creando un nuevo token (nivel 1) usando este token como materia prima.</>
+                  )}
+                  {currentUser.role.toLowerCase() === 'retailer' && tokenLevel === 1 && (
+                    <>Primero debes <strong>crear un producto final</strong> (nivel 2) usando este token de fábrica como base.</>
+                  )}
+                  {tokenLevel !== 0 && tokenLevel !== 1 && (
+                    <>Este token no puede ser transferido por tu rol. Verifica que tengas el token correcto.</>
+                  )}
+                </p>
+              </div>
+            </div>
+            <Button variant="outline" onClick={() => router.back()}>
+              Volver a Mis Tokens
+            </Button>
+          </div>
+        ) : validRecipients.length === 0 ? (
           <div className="text-center py-8">
             <div className="mb-4">
               <p className="text-gray-600 mb-2">
