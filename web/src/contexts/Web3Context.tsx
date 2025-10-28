@@ -505,10 +505,19 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   };
 
   const getTransfer = async (transferId: number): Promise<Transfer | null> => {
-    if (!contract) throw new Error('Contract not connected');
+    if (!contract || !provider) throw new Error('Contract not connected');
     
     try {
-      const transfer = await contract.getTransfer(transferId);
+      // ✅ FIX BUG 3: Crear nueva instancia del contrato para evitar caché de ethers.js
+      const freshContract = new Contract(
+        CONTRACT_CONFIG.address,
+        CONTRACT_CONFIG.abi,
+        provider
+      );
+      
+      const transfer = await freshContract.getTransfer(transferId);
+      const status = ['Pending', 'Accepted', 'Rejected'][transfer.status] as any;
+      
       return {
         id: Number(transfer.id),
         from: transfer.from,
@@ -516,7 +525,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
         tokenId: Number(transfer.tokenId),
         dateCreated: Number(transfer.dateCreated),
         amount: Number(transfer.amount),
-        status: ['Pending', 'Accepted', 'Rejected'][transfer.status] as any,
+        status: status,
       };
     } catch (error) {
       logger.error(`Error fetching transfer info for transfer ID ${transferId}: ${error}`);
@@ -525,22 +534,36 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   };
 
   const getUserTransfers = async (address?: string): Promise<number[]> => {
-    if (!contract) throw new Error('Contract not connected');
+    if (!contract || !provider) throw new Error('Contract not connected');
     
     const targetAddress = address || account;
     if (!targetAddress) throw new Error('No address provided');
 
-    const transfers = await contract.getUserTransfers(targetAddress);
+    // ✅ FIX BUG 3: Crear nueva instancia del contrato para evitar caché de ethers.js
+    const freshContract = new Contract(
+      CONTRACT_CONFIG.address,
+      CONTRACT_CONFIG.abi,
+      provider
+    );
+
+    const transfers = await freshContract.getUserTransfers(targetAddress);
     return transfers.map((transfer: any) => Number(transfer));
   };
 
   const getPendingTransfers = async (address?: string): Promise<number[]> => {
-    if (!contract) throw new Error('Contract not connected');
+    if (!contract || !provider) throw new Error('Contract not connected');
     
     const targetAddress = address || account;
     if (!targetAddress) throw new Error('No address provided');
 
-    const transfers = await contract.getPendingTransfers(targetAddress);
+    // ✅ FIX BUG 3: Crear nueva instancia del contrato para evitar caché de ethers.js
+    const freshContract = new Contract(
+      CONTRACT_CONFIG.address,
+      CONTRACT_CONFIG.abi,
+      provider
+    );
+
+    const transfers = await freshContract.getPendingTransfers(targetAddress);
     return transfers.map((transfer: any) => Number(transfer));
   };
 

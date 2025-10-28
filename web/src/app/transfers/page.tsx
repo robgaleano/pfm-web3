@@ -5,6 +5,22 @@ import { useRouter } from 'next/navigation';
 import { useWallet, useTransfers, useTokens } from '@/hooks/useWallet';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import logger from '@/lib/logger';
 
@@ -32,6 +48,8 @@ export default function TransfersPage() {
   const [pendingTransfers, setPendingTransfers] = useState<TransferWithToken[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [processingId, setProcessingId] = useState<number | null>(null);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [transferToReject, setTransferToReject] = useState<number | null>(null);
 
   const loadTransfers = async () => {
     try {
@@ -113,21 +131,29 @@ export default function TransfersPage() {
   }
 
   const handleAccept = async (transferId: number) => {
-    // Prevenir doble click
     if (processingId !== null) return;
 
     try {
       setProcessingId(transferId);
+      
       await acceptTransfer(transferId);
+      
+      // ✅ FIX BUG 3: Limpiar estado y esperar confirmación de blockchain
+      setAllTransfers([]);
+      setPendingTransfers([]);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      await loadTransfers();
+      
       toast.success('Transferencia aceptada exitosamente', {
         description: `Transfer ID: ${transferId}`
       });
-      await loadTransfers();
     } catch (error) {
       logger.error(`Error accepting transfer: ${error}`);
       toast.error('Error al aceptar transferencia', {
         description: error instanceof Error ? error.message : 'Intenta nuevamente'
       });
+      await loadTransfers();
     } finally {
       setProcessingId(null);
     }
@@ -137,24 +163,39 @@ export default function TransfersPage() {
     // Prevenir doble click
     if (processingId !== null) return;
 
-    if (!confirm('¿Estás seguro de rechazar esta transferencia?')) {
-      return;
-    }
+    // Abrir dialog de confirmación
+    setTransferToReject(transferId);
+    setRejectDialogOpen(true);
+  };
+
+  const confirmReject = async () => {
+    if (!transferToReject) return;
 
     try {
-      setProcessingId(transferId);
-      await rejectTransfer(transferId);
-      toast.info('Transferencia rechazada', {
-        description: `Transfer ID: ${transferId}`
-      });
+      setProcessingId(transferToReject);
+      setRejectDialogOpen(false);
+      
+      await rejectTransfer(transferToReject);
+      
+      // ✅ FIX BUG 3: Limpiar estado y esperar confirmación de blockchain
+      setAllTransfers([]);
+      setPendingTransfers([]);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
       await loadTransfers();
+      
+      toast.info('Transferencia rechazada', {
+        description: `Transfer ID: ${transferToReject}`
+      });
     } catch (error) {
       logger.error(`Error rejecting transfer: ${error}`);
       toast.error('Error al rechazar transferencia', {
         description: error instanceof Error ? error.message : 'Intenta nuevamente'
       });
+      await loadTransfers();
     } finally {
       setProcessingId(null);
+      setTransferToReject(null);
     }
   };
 
@@ -251,23 +292,42 @@ export default function TransfersPage() {
                     )}
                   </div>
 
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleAccept(transfer.id)}
-                      disabled={processingId === transfer.id}
-                      className="flex-1 md:flex-initial"
-                    >
-                      {processingId === transfer.id ? 'Procesando...' : 'Aceptar'}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => handleReject(transfer.id)}
-                      disabled={processingId === transfer.id}
-                      className="flex-1 md:flex-initial"
-                    >
-                      Rechazar
-                    </Button>
-                  </div>
+                  <TooltipProvider>
+                    <div className="flex gap-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            onClick={() => handleAccept(transfer.id)}
+                            disabled={processingId === transfer.id}
+                            className="flex-1 md:flex-initial"
+                          >
+                            {processingId === transfer.id ? 'Procesando...' : 'Aceptar'}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-sm">Requiere transacción en blockchain</p>
+                          <p className="text-xs text-muted-foreground">Se te pedirá aprobar con MetaMask</p>
+                        </TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            onClick={() => handleReject(transfer.id)}
+                            disabled={processingId === transfer.id}
+                            className="flex-1 md:flex-initial"
+                          >
+                            Rechazar
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-sm">Requiere transacción en blockchain</p>
+                          <p className="text-xs text-muted-foreground">Se te pedirá aprobar con MetaMask</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </TooltipProvider>
                 </div>
               </Card>
             ))}
@@ -306,12 +366,13 @@ export default function TransfersPage() {
                         <span className={`text-xs px-2 py-1 rounded ${getStatusColor(transfer.status)}`}>
                           {getStatusLabel(transfer.status)}
                         </span>
-                        {!isAdmin && isSender && (
+                        {/* ✅ Solo mostrar "Enviado/Recibido" si la transferencia fue ACEPTADA */}
+                        {!isAdmin && transfer.status === 'Accepted' && isSender && (
                           <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800">
                             Enviado
                           </span>
                         )}
-                        {!isAdmin && !isSender && (
+                        {!isAdmin && transfer.status === 'Accepted' && !isSender && (
                           <span className="text-xs px-2 py-1 rounded bg-green-100 text-green-800">
                             Recibido
                           </span>
@@ -362,6 +423,33 @@ export default function TransfersPage() {
           </div>
         )}
       </div>
+
+      {/* Dialog de confirmación para rechazar transferencia */}
+      <AlertDialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Rechazar transferencia?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. La transferencia será marcada como rechazada
+              y requerirá una transacción en la blockchain.
+              {transferToReject && (
+                <span className="block mt-2 font-mono text-sm">
+                  Transfer ID: #{transferToReject}
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmReject}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Rechazar Transferencia
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

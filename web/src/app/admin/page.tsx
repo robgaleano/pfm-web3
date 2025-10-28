@@ -168,7 +168,7 @@ export default function AdminPage() {
           {/* Acciones Rápidas */}
           <div>
             <h2 className="text-xl font-semibold mb-4">Acciones Rápidas</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="p-6">
                 <h3 className="font-semibold mb-2">Gestión de Usuarios</h3>
                 <p className="text-sm text-gray-600 mb-4">
@@ -177,6 +177,18 @@ export default function AdminPage() {
                 <Link href="/admin/users">
                   <Button className="w-full">
                     Ir a Usuarios
+                  </Button>
+                </Link>
+              </Card>
+
+              <Card className="p-6 bg-blue-50 border-blue-200">
+                <h3 className="font-semibold mb-2">🔍 Trazabilidad Completa</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Ver el árbol completo de tokens y todas las transferencias
+                </p>
+                <Link href="/admin/traceability">
+                  <Button className="w-full">
+                    Ver Trazabilidad
                   </Button>
                 </Link>
               </Card>
