@@ -825,7 +825,10 @@ R: No, los tokens en blockchain son permanentes. Puedes transferir todo el balan
    
    # Terminal 2 - Redespliega el contrato:
    cd sc
-   forge script script/Deploy.s.sol --rpc-url http://localhost:8545 --broadcast
+   forge script script/Deploy.s.sol \
+  --rpc-url http://localhost:8545 \
+  --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
+  --broadcast
    
    # Terminal 3 - Reinicia el frontend:
    cd web
@@ -862,7 +865,10 @@ R: No, los tokens en blockchain son permanentes. Puedes transferir todo el balan
 2. **Despliega el contrato:**
    ```bash
    cd sc
-   forge script script/Deploy.s.sol --rpc-url http://localhost:8545 --broadcast
+   forge script script/Deploy.s.sol \
+  --rpc-url http://localhost:8545 \
+  --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
+  --broadcast
    ```
 
 3. **Verifica la dirección desplegada:**
@@ -1108,7 +1114,10 @@ anvil
 **Desplegar/Redesplegar Contrato:**
 ```bash
 cd sc
-forge script script/Deploy.s.sol --rpc-url http://localhost:8545 --broadcast
+forge script script/Deploy.s.sol \
+  --rpc-url http://localhost:8545 \
+  --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
+  --broadcast
 ```
 
 **Ejecutar Tests del Contrato:**
