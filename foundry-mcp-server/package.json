@@ -1,0 +1,33 @@
+{
+  "name": "mcp-foundry-supplychain",
+  "version": "1.0.0",
+  "description": "MCP Server for Foundry CLI tools - Optimized for SupplyChain project with VSCode Copilot",
+  "main": "build/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js",
+    "dev": "tsc --watch",
+    "clean": "rm -rf build",
+    "watch": "tsc --watch"
+  },
+  "keywords": [
+    "mcp",
+    "foundry",
+    "blockchain",
+    "ethereum",
+    "smart-contracts",
+    "vscode",
+    "copilot",
+    "supply-chain"
+  ],
+  "author": "SupplyChain Tracker - VSCode Copilot Integration",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.3"
+  }
+}

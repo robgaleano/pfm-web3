@@ -1,0 +1,17 @@
+{
+  "github.copilot.advanced": {
+    "mcpServers": {
+      "foundry-supplychain": {
+        "command": "node",
+        "args": [
+          "${workspaceFolder}/mcp-foundry-server/build/index.js"
+        ],
+        "env": {
+          "NODE_ENV": "production",
+          "DEFAULT_RPC_URL": "http://127.0.0.1:8545",
+          "AUTO_UPDATE_CONFIG": "true"
+        }
+      }
+    }
+  }
+}
