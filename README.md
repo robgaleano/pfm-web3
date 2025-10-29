@@ -64,6 +64,11 @@ Tu aplicación final debe implementar:
 ### 🖼️ Vista Previa de la Aplicación
 
 Implementacion de referencia. (url )
+
+### 🎥 Video Demo
+
+**Video demostrativo de la aplicación**: Puedes encontrar un video completo de demostración del funcionamiento de la aplicación en la carpeta [`media/supply-chain-tracker-demo.mov`](./media/supply-chain-tracker-demo.mov)
+
 ---
 
 ## 🏭 Actores del Sistema
